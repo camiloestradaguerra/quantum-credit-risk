@@ -403,9 +403,32 @@ def main():
         logger.info("SAVING ARTIFACTS")
         logger.info("=" * 80)
         
+        # Save metrics
         with open(MODELS_PATH / 'quantum_metrics_optimized.json', 'w') as f:
             json.dump(metrics, f, indent=2)
         logger.info(f"Saved metrics: {MODELS_PATH / 'quantum_metrics_optimized.json'}")
+        
+        # Save QSVM model and kernel matrices
+        with open(MODELS_PATH / 'qsvm_model.pkl', 'wb') as f:
+            pickle.dump(qsvm, f)
+        logger.info(f"Saved QSVM model: {MODELS_PATH / 'qsvm_model.pkl'}")
+        
+        with open(MODELS_PATH / 'qsvm_K_train.pkl', 'wb') as f:
+            pickle.dump(K_train, f)
+        logger.info(f"Saved K_train: {MODELS_PATH / 'qsvm_K_train.pkl'}")
+        
+        with open(MODELS_PATH / 'qsvm_K_test.pkl', 'wb') as f:
+            pickle.dump(K_test, f)
+        logger.info(f"Saved K_test: {MODELS_PATH / 'qsvm_K_test.pkl'}")
+        
+        # Save training data for predictions
+        np.save(MODELS_PATH / 'qsvm_X_train_kernel.npy', X_train_kernel)
+        logger.info(f"Saved X_train_kernel: {MODELS_PATH / 'qsvm_X_train_kernel.npy'}")
+        
+        # Save feature scaler
+        with open(MODELS_PATH / 'qsvm_scaler.pkl', 'wb') as f:
+            pickle.dump(scaler, f)
+        logger.info(f"Saved scaler: {MODELS_PATH / 'qsvm_scaler.pkl'}")
         
         # Summary
         elapsed = datetime.now() - start_time
