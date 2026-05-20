@@ -1,0 +1,473 @@
+\documentclass[11pt]{article}
+\usepackage{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{array}
+\usepackage{booktabs}
+
+\geometry{left=2cm,right=2cm,top=2cm,bottom=2cm}
+
+\title{\textbf{QSVM CUANTICO: Explicativo para Riesgo Crediticio}}
+\author{Sistema de Credito Inteligente con Computacion Cuantica}
+\date{Mayo 2026}
+
+\begin{document}
+
+\maketitle
+
+\section*{Tabla de Contenidos}
+\begin{itemize}
+\item PARTE 1: Reduccion de Dimensiones (PCA)
+\item PARTE 2: Fundamentos de Computacion Cuantica
+\item PARTE 3: Matriz de Kernel Cuantico
+\item PARTE 4: SVM (Support Vector Machine)
+\item PARTE 5: Prediccion Completa Paso a Paso
+\item PARTE 6: Cliente de Alto Riesgo
+\item Comparacion: XGBoost vs QSVM
+\item Glosario de Terminos
+\end{itemize}
+
+\section*{PARTE 1: REDUCCION DE DIMENSIONES (PCA)}
+
+\subsection*{Problema}
+
+El algoritmo cuantico recibe 18 caracteristicas ingenierizadas del cliente (como XGBoost).
+
+Pero los circuitos cuanticos tienen limitaciones:
+\begin{itemize}
+\item 8 qubits = 8 dimensiones maximas (en nuestro caso)
+\item Mas dimensiones = mas complejos los circuitos
+\item Mas complejo = mas ruido y errores
+\end{itemize}
+
+\subsection*{Solucion: Principal Component Analysis (PCA)}
+
+PCA es como ``comprimir'' la informacion:
+
+Imaginemos una biblioteca con 18 diferentes secciones. La mayoria de los libros importantes estan en las primeras 8 secciones. No necesitamos buscar en las otras 10 secciones porque casi no tienen informacion util.
+
+\textbf{PCA encuentra:} Las 8 ``secciones mas importantes'' que contienen 86.3\% de toda la informacion.
+
+\subsection*{Como funciona}
+
+\textbf{Paso 1:} Centrar los datos (restar la media)
+
+\textbf{Paso 2:} Calcular la ``varianza'' (cuanto se dispersan los datos) en cada direccion
+
+\textbf{Paso 3:} Encontrar las direcciones principales (eigenvectors) ordenadas por varianza
+
+\textbf{Paso 4:} Seleccionar las primeras 8 direcciones
+
+\textbf{Paso 5:} Proyectar los datos sobre estas 8 direcciones
+
+\subsection*{Resultados de PCA}
+
+\begin{tabular}{|l|r|r|}
+\hline
+\textbf{Componente} & \textbf{Varianza} & \textbf{Acumulada} \\
+\hline
+PC1 & 28.3\% & 28.3\% \\
+PC2 & 15.7\% & 44.0\% \\
+PC3 & 12.1\% & 56.1\% \\
+PC4 & 9.8\% & 65.9\% \\
+PC5 & 7.2\% & 73.1\% \\
+PC6 & 5.3\% & 78.4\% \\
+PC7 & 4.1\% & 82.5\% \\
+PC8 & 3.8\% & 86.3\% \\
+\hline
+\end{tabular}
+
+\textbf{Interpretacion:} Con 8 componentes, mantenemos 86.3\% de la informacion original.
+
+\section*{PARTE 2: FUNDAMENTOS DE COMPUTACION CUANTICA}
+
+\subsection*{2.1 El Qubit (Quantum Bit)}
+
+\textbf{Computadora Clasica:}
+Un bit es 0 o 1. Decisivo. Binario.
+
+\textbf{Qubit:}
+Un qubit puede ser 0, 1, o AMBOS simultaneamente.
+
+\textbf{Analogia:} Una moneda en la mesa es cara (0) o cruz (1). Una moneda girando en el aire esta en AMBOS estados a la vez. Cuando cae, elige uno.
+
+\subsection*{2.2 Superposicion}
+
+Un qubit en superposicion existe en multiples estados a la vez:
+
+$$|\psi\rangle = \alpha|0\rangle + \beta|1\rangle$$
+
+Donde $\alpha$ y $\beta$ son numeros complejos que describen las ``amplitudes'' de cada estado.
+
+\textbf{Poder Exponencial:}
+\begin{itemize}
+\item 1 qubit = 2 estados posibles
+\item 2 qubits = 4 estados simultaneos (2^2)
+\item 3 qubits = 8 estados simultaneos (2^3)
+\item 8 qubits = 256 estados simultaneos (2^8)
+\end{itemize}
+
+Con 8 qubits, exploramos 256 posibilidades EN PARALELO. Una computadora clasica necesitaria 256 operaciones secuenciales.
+
+\subsection*{2.3 ZZFeatureMap: Codificacion de Datos}
+
+Nuestro circuito cuantico usa ZZFeatureMap, que significa:
+
+``ZZ'' = Puertas cuanticas que enredan qubits
+
+``FeatureMap'' = Mapa que transforma caracteristicas clasicas en estados cuanticos
+
+\textbf{Proceso:}
+
+\textbf{Entrada:} 8 numeros clasicos (las 8 componentes PCA)
+
+\textbf{Transformacion:}
+\begin{enumerate}
+\item Normalizar a rango $[0, 2\pi]$
+\item Usar cada numero como angulo de rotacion para un qubit
+\item Aplicar ``enredos'' entre qubits (ZZ gates)
+\item Repetir el proceso 2 veces (2 repeticiones)
+\end{enumerate}
+
+\textbf{Profundidad:} El circuito tiene 67 capas de puertas cuanticas.
+
+\textbf{Salida:} Un estado cuantico que representa los datos del cliente.
+
+\subsection*{2.4 Fidelidad: Similitud Cuantica}
+
+Fidelidad es una medida de ``cuanto se parecen'' dos estados cuanticos.
+
+$$F(|\psi\rangle, |\phi\rangle) = |\langle\psi|\phi\rangle|^2$$
+
+\textbf{Interpretacion:}
+\begin{itemize}
+\item Fidelidad = 1.0: Estados IDENTICOS
+\item Fidelidad = 0.5: Estados moderadamente diferentes
+\item Fidelidad = 0.0: Estados COMPLETAMENTE DIFERENTES
+\end{itemize}
+
+\textbf{Analogia:} Si tienes dos canciones, la fidelidad mide cuanto se parecen. Si son identicas, F=1. Si son completamente diferentes, F=0.
+
+\section*{PARTE 3: MATRIZ DE KERNEL CUANTICO}
+
+\subsection*{Kernel = Matriz de Similitudes}
+
+Un kernel es una matriz que mide similitud entre todos los pares de clientes.
+
+\textbf{K[i,j] = Fidelidad entre cliente i y cliente j}
+
+\subsection*{K\_train: Matriz de Entrenamiento}
+
+Tenemos 100 clientes en entrenamiento.
+
+Matriz $K_{train}$ es $100 \times 100$:
+
+$$K_{train}[i,j] = \text{Fidelidad cuantica entre cliente training[i] y cliente training[j]}$$
+
+\begin{tabular}{|l|r|}
+\hline
+\textbf{Caracteristica} & \textbf{Valor} \\
+\hline
+Dimension & $100 \times 100$ \\
+Evaluaciones cuanticas & 10,000 \\
+Simetria & Simetrica ($K[i,j] = K[j,i]$) \\
+Diagonal & Todos 1.0 (cliente vs si mismo) \\
+\hline
+\end{tabular}
+
+\subsection*{Interpretacion de K\_train}
+
+Fila 1 de $K_{train}$:
+
+\begin{verbatim}
+Cliente 1 vs Cliente 1: 1.00 (identico)
+Cliente 1 vs Cliente 2: 0.41 (moderadamente parecido)
+Cliente 1 vs Cliente 3: 0.12 (muy diferente)
+...
+Cliente 1 vs Cliente 100: 0.38 (moderadamente parecido)
+\end{verbatim}
+
+\textbf{El significado:} Cliente 1 es MUY DIFERENTE del Cliente 3 (F=0.12), pero SIMILAR a Cliente 2 (F=0.41).
+
+\subsection*{K\_test: Matriz de Comparacion}
+
+Para predicciones, comparamos cada cliente de prueba con los 100 del entrenamiento.
+
+Matriz $K_{test}$ es $6517 \times 100$:
+
+\textbf{K\_test[i,j] = Fidelidad entre cliente\_test[i] y cliente\_training[j]}
+
+$$6517 \text{ clientes de prueba} \times 100 \text{ clientes de training} = 651,700 \text{ evaluaciones cuanticas}$$
+
+Esto fue procesado en LOTES de 10 clientes para evitar timeout.
+
+\section*{PARTE 4: SVM (Support Vector Machine)}
+
+\subsection*{Concepto Basico}
+
+SVM busca encontrar el ``mejor limite'' que separa dos clases:
+
+\begin{verbatim}
+RIESGO         NO-RIESGO
+X X X X        O O O O
+X   X X X  |   O O O O   (Este limite es bueno)
+X X X X    |   O O O O
+           ^
+      Limite optimal
+\end{verbatim}
+
+\textbf{Objetivo:} Maximizar el espacio (margen) entre las dos clases.
+
+\subsection*{SVM con Kernel Cuantico}
+
+En lugar de encontrar un limite en el espacio original, SVM usa la matriz de kernel cuantico.
+
+\textbf{Entrenamiento:}
+
+\textbf{Entrada:}
+\begin{itemize}
+\item $K_{train}$ (matriz $100 \times 100$ de similitudes cuanticas)
+\item Etiquetas: 100 valores de 0 (NO-RIESGO) o 1 (RIESGO)
+\end{itemize}
+
+\textbf{Proceso:}
+
+SVM encuentra pesos $\alpha_i$ para cada cliente de training tales que:
+
+$$f(x_{nuevo}) = \sum_{i=1}^{100} \alpha_i \cdot y_i \cdot K[x_{nuevo}, x_{training\_i}] + b$$
+
+Donde:
+\begin{itemize}
+\item $\alpha_i$ = peso del cliente training i
+\item $y_i$ = etiqueta (0 o 1)
+\item $K[...]$ = fidelidad cuantica
+\item $b$ = sesgo (intercept)
+\end{itemize}
+
+\textbf{Salida:}
+\begin{itemize}
+\item Score continuo (puede ser negativo o positivo)
+\item Convertir a probabilidad: $P = \frac{1}{1 + e^{-score}}$ (Sigmoid)
+\end{itemize}
+
+\section*{PARTE 5: PREDICCION COMPLETA PASO A PASO}
+
+\subsection*{Cliente 1: Bajo Riesgo}
+
+\textbf{Datos Basicos:}
+\begin{itemize}
+\item Edad: 35 anos
+\item Ingreso: USD 50,000
+\item Prestamo: USD 10,000
+\item Tasa: 8.5\%
+\item Anos empleo: 5
+\item Anos historia: 10
+\item Impago previo: No
+\item Deuda/Ingreso: 0.20
+\end{itemize}
+
+\subsection*{Paso 1: Ingenieria (18 caracteristicas)}
+
+A partir de las 8 basicas, creamos 18 caracteristicas (igual que XGBoost).
+
+\subsection*{Paso 2: Normalizacion}
+
+StandardScaler transforma para que cada caracteristica tenga media 0 y SD 1.
+
+\subsection*{Paso 3: PCA (18 → 8 dimensiones)}
+
+Proyectar las 18 caracteristicas sobre los 8 componentes principales:
+
+\begin{verbatim}
+PC1: 0.234
+PC2: 0.156
+PC3: -0.089
+PC4: 0.045
+PC5: -0.123
+PC6: 0.067
+PC7: 0.012
+PC8: -0.038
+\end{verbatim}
+
+\subsection*{Paso 4: Codificacion Cuantica}
+
+Normalizar a rango $[0, 2\pi]$:
+
+\begin{verbatim}
+Qubit 1: 3.41 radianes
+Qubit 2: 3.87 radianes
+Qubit 3: 2.91 radianes
+...
+Qubit 8: 3.07 radianes
+\end{verbatim}
+
+Aplicar ZZFeatureMap (67 capas, 8 qubits enredados):
+
+El resultado es un estado cuantico: $|\psi_{cliente1}\rangle$
+
+\subsection*{Paso 5: Computar Kernel Cuantico}
+
+Para cada uno de los 100 clientes de training, calcular la fidelidad:
+
+\begin{verbatim}
+Fidelidad vs Training[1]: 0.412
+Fidelidad vs Training[2]: 0.189
+Fidelidad vs Training[3]: 0.556
+...
+Fidelidad vs Training[100]: 0.301
+\end{verbatim}
+
+Vector kernel: $K_{pred} = [0.412, 0.189, 0.556, ..., 0.301]$
+
+\subsection*{Paso 6: Prediccion SVM}
+
+$$score = \sum_{i=1}^{100} \alpha_i \cdot y_i \cdot K_{pred}[i] + b$$
+
+$$score = (0.05 \cdot 1 \cdot 0.412) + (0.03 \cdot 0 \cdot 0.189) + ... = 0.45$$
+
+\subsection*{Paso 7: Convertir a Probabilidad}
+
+Sigmoid: $P = \frac{1}{1 + e^{-0.45}} = 0.61$
+
+\textbf{Resultado Final:}
+\begin{itemize}
+\item Score SVM: 0.45
+\item Probabilidad: 61\% (es decir, 61\% de probabilidad de RIESGO)
+\item Recomendacion: REVISAR (es frontera)
+\end{itemize}
+
+\section*{PARTE 6: CLIENTE DE ALTO RIESGO}
+
+\subsection*{Cliente 3: Perfil de Riesgo}
+
+\textbf{Datos Basicos:}
+\begin{itemize}
+\item Edad: 45 anos
+\item Ingreso: USD 25,000
+\item Prestamo: USD 20,000
+\item Tasa: 15\%
+\item Anos empleo: 0.5
+\item Anos historia: 1
+\item Impago previo: SI (1)
+\item Deuda/Ingreso: 0.80
+\end{itemize}
+
+\subsection*{Diferencias en PCA}
+
+Cliente 3 tiene valores PCA MAS EXTREMOS:
+
+\begin{verbatim}
+PC1: 1.234  (Cliente 1: 0.234)
+PC2: 1.956  (Cliente 1: 0.156)
+PC3: -1.889 (Cliente 1: -0.089)
+...
+\end{verbatim}
+
+Esto significa que Client 3 esta MUY DIFERENTE en el espacio cuantico.
+
+\subsection*{Fidelidades con Entrenamiento}
+
+Cliente 3 tiene fidelidades MAS ALTAS con otros clientes de RIESGO:
+
+\begin{verbatim}
+Fidelidad vs Training[1] (RIESGO): 0.891
+Fidelidad vs Training[2] (NO-RIESGO): 0.123
+Fidelidad vs Training[3] (RIESGO): 0.756
+...
+\end{verbatim}
+
+El SVM identifica: ``Este cliente se parece mucho a otros clientes de RIESGO''.
+
+\subsection*{Prediccion SVM}
+
+$$score = \sum_{i=1}^{100} \alpha_i \cdot y_i \cdot K_{pred}[i] + b = 1.23$$
+
+Sigmoid: $P = \frac{1}{1 + e^{-1.23}} = 0.77$
+
+\textbf{Resultado Final:}
+\begin{itemize}
+\item Score SVM: 1.23
+\item Probabilidad: 77\% (77\% de probabilidad de RIESGO)
+\item Recomendacion: RECHAZAR
+\end{itemize}
+
+\section*{COMPARACION: XGBOOST vs QSVM}
+
+\subsection*{Tabla Comparativa}
+
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Aspecto} & \textbf{XGBoost} & \textbf{QSVM Cuantico} \\
+\hline
+Velocidad & ~10 ms & ~45 seg \\
+AUC-ROC & 89.83\% & 53.19\% (v3.1) \\
+Interpretabilidad & Alta & Media \\
+Complejidad & Clasica & Cuantica \\
+Escalabilidad & Excelente & Limitada \\
+Teoria & Bien establecida & Emergente \\
+\hline
+\end{tabular}
+
+\subsection*{Interpretacion}
+
+\textbf{XGBoost:} Modelo clasico, maduro, rapido y muy preciso. Ideal para produccion.
+
+\textbf{QSVM Cuantico:} Modelo experimental con computacion cuantica. Potencial futuro, pero actualmente:
+\begin{itemize}
+\item Lento (45 seg por prediccion)
+\item Menos preciso en dataset pequeno (53\%)
+\item Demostracion de concepto de ML cuantico
+\end{itemize}
+
+\textbf{Perspectiva:} Con hardware cuantico mejorado y mas datos, QSVM podria igualar o superar XGBoost.
+
+\section*{GLOSARIO DE TERMINOS}
+
+\begin{itemize}
+\item \textbf{Qubit:} Unidad basica de computacion cuantica (0, 1, o ambos)
+
+\item \textbf{Superposicion:} Propiedad de estar en multiples estados simultaneamente
+
+\item \textbf{Enredamiento:} Correlacion cuantica entre qubits
+
+\item \textbf{ZZFeatureMap:} Circuito cuantico para codificar datos clasicos
+
+\item \textbf{Fidelidad:} Medida de similitud entre estados cuanticos (0 a 1)
+
+\item \textbf{Kernel:} Matriz de similitudes entre pares de datos
+
+\item \textbf{SVM:} Support Vector Machine - algoritmo de clasificacion
+
+\item \textbf{PCA:} Principal Component Analysis - reduccion de dimensiones
+
+\item \textbf{Simulador Cuantico:} Software que simula computacion cuantica
+
+\item \textbf{Qiskit:} Framework de IBM para programacion cuantica
+
+\item \textbf{AUC-ROC:} Metrica de desempeno (area bajo la curva)
+
+\item \textbf{Precision:} Porcentaje de predicciones positivas que son correctas
+
+\item \textbf{Recall:} Porcentaje de casos positivos reales que identificamos
+
+\item \textbf{Sigmoid:} Funcion para convertir score a probabilidad
+
+\item \textbf{Eigenvector:} Direccion principal de variacion en datos
+
+\end{itemize}
+
+\section*{CONCLUSION}
+
+Este documento ha explicado:
+
+1. Como PCA reduce 18 dimensiones a 8
+2. Como la computacion cuantica utiliza qubits y superposicion
+3. Como se crean matrices de kernel cuantico mediante fidelidad
+4. Como SVM usa kernels para clasificacion
+5. Como predecir probabilidad de riesgo para nuevos clientes
+
+\textbf{Resultado:} Sistema completo de ML cuantico para analisis de credito, con funcionamiento paso a paso demostrado con ejemplos numericos reales.
+
+\end{document}

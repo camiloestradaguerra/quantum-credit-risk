@@ -1,0 +1,326 @@
+\documentclass[11pt]{article}
+\usepackage{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{array}
+\usepackage{booktabs}
+
+\geometry{left=2cm,right=2cm,top=2cm,bottom=2cm}
+
+\title{\textbf{XGBOOST: Explicativo para Riesgo Crediticio}}
+\author{Sistema de Credito Inteligente}
+\date{Mayo 2026}
+
+\begin{document}
+
+\maketitle
+
+\section*{Tabla de Contenidos}
+\begin{itemize}
+\item Introduccion: Que es XGBoost?
+\item Conceptos Fundamentales
+\item Data Flow Completo
+\item Normalizacion
+\item Ingenieria de Caracteristicas
+\item Entrenamiento
+\item Predicciones
+\item Metricas
+\item Umbral Optimo
+\item Ventajas
+\item Glosario
+\end{itemize}
+
+\section*{1. INTRODUCCION: QUE ES XGBOOST?}
+
+XGBoost es un algoritmo de machine learning que combina multiples ``expertos debiles'' para crear una ``prediccion fuerte''.
+
+\textbf{Analogia:} Imagina 200 analistas de credito, cada uno con una estrategia simple. Si los 200 votan, su decision conjunta es mucho mas confiable que cualquier experto individual.
+
+XGBoost utiliza:
+\begin{itemize}
+\item \textbf{Arboles de Decision:} Estructuras simples que hacen preguntas (Si X > Y, entonces...)
+\item \textbf{Boosting:} Combina 200 arboles pequenos iterativamente
+\item \textbf{Aprendizaje de Errores:} Cada nuevo arbol intenta corregir los errores del anterior
+\end{itemize}
+
+\subsection*{Resultado}
+\begin{itemize}
+\item Velocidad: $\sim$10 milisegundos por prediccion
+\item Precision: AUC-ROC 89.83\%
+\item F1-Score: 0.73 (Balance precision-recall)
+\end{itemize}
+
+\section*{2. CONCEPTOS FUNDAMENTALES}
+
+\subsection*{2.1 Arbol de Decision}
+
+Un arbol de decision es una serie de preguntas:
+
+\begin{verbatim}
+  [Inicio: Cliente]
+  |
+  +-- Es edad > 35?
+      |
+      +-- Si: Edad_Riesgo = Bajo
+      |
+      +-- No: Edad_Riesgo = Alto
+\end{verbatim}
+
+Cada respuesta (Si/No) divide los clientes en grupos mas homogeneos.
+
+\subsection*{2.2 Boosting}
+
+Boosting significa ``empujar hacia arriba'':
+
+\textbf{Iteracion 1:} Entrena un arbol con todos los datos.
+
+\textbf{Iteracion 2:} Entrena un arbol ENFOCANDOSE en los errores de la iteracion 1.
+
+\textbf{Iteracion 3-200:} Cada arbol intenta corregir los errores acumulados.
+
+\textbf{Prediccion Final:} Suma ponderada de todos los 200 arboles.
+
+\section*{3. DATA FLOW COMPLETO}
+
+\subsection*{Paso 1: Entrada}
+
+Se reciben 8 caracteristicas basicas del cliente:
+\begin{enumerate}
+\item \texttt{age} - Edad del cliente
+\item \texttt{income} - Ingreso anual (en miles USD)
+\item \texttt{loan\_amount} - Monto del prestamo (en miles USD)
+\item \texttt{interest\_rate} - Tasa de interes (\%)
+\item \texttt{employment\_years} - Anos de empleo
+\item \texttt{credit\_history\_years} - Anos de historial crediticio
+\item \texttt{prior\_default} - Impago previo? (0 o 1)
+\item \texttt{debt\_to\_income} - Deuda / Ingreso (ratio)
+\end{enumerate}
+
+\subsection*{Paso 2: Ingenieria de Caracteristicas}
+
+A partir de las 8 caracteristicas basicas, se crean 18 nuevas:
+
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Caracteristica Original} & \textbf{Derivadas (Ejemplos)} \\
+\hline
+age & age\_square, age\_group\_young, age\_group\_old \\
+income & income\_per\_loan, log\_income, income\_stability \\
+loan\_amount & loan\_to\_income, loan\_per\_year \\
+interest\_rate & rate\_risk\_premium, rate\_volatility \\
+\hline
+\end{tabular}
+
+\textbf{Por que?} Estos ratios y transformaciones capturan relaciones no lineales que los arboles pueden aprender mejor.
+
+\subsection*{Paso 3: Normalizacion}
+
+StandardScaler transforma cada caracteristica para tener:
+\begin{itemize}
+\item Media = 0
+\item Desviacion estandar = 1
+\end{itemize}
+
+\textbf{Formula:}
+$$X_{scaled} = \frac{X - \mu}{\sigma}$$
+
+Donde $\mu$ = media, $\sigma$ = desviacion estandar.
+
+\textbf{Beneficio:} XGBoost converge mas rapido cuando todas las caracteristicas estan en la misma escala.
+
+\section*{4. ENTRENAMIENTO}
+
+\subsection*{Configuracion}
+
+\begin{tabular}{|l|r|}
+\hline
+\textbf{Parametro} & \textbf{Valor} \\
+\hline
+Numero de Arboles & 200 \\
+Profundidad Maxima & 6 \\
+Tasa de Aprendizaje & 0.1 \\
+Regularizacion L2 & 1.0 \\
+Balance de Clases & scale\_pos\_weight \\
+\hline
+\end{tabular}
+
+\subsection*{Manejo de Desbalance}
+
+En los datos de entrenamiento:
+\begin{itemize}
+\item 20,186 clientes sin impago (NO-RIESGO)
+\item 14,456 clientes con impago (RIESGO)
+\end{itemize}
+
+Razon: $\approx$41\% de impagos.
+
+XGBoost ajusta automaticamente los pesos para dar mas importancia a los casos raros (impagos).
+
+\section*{5. PREDICCIONES: EJEMPLO NUMERICO}
+
+\subsection*{Cliente 1: Bajo Riesgo}
+
+\textbf{Datos Basicos:}
+\begin{itemize}
+\item Edad: 35 anos
+\item Ingreso: USD 50,000/ano
+\item Prestamo: USD 10,000
+\item Tasa: 8.5\%
+\item Anos empleo: 5
+\item Anos historia crediticia: 10
+\item Impago previo?: No (0)
+\item Deuda/Ingreso: 0.20
+\end{itemize}
+
+\textbf{Paso 1: Ingenieria}
+\begin{itemize}
+\item age\_square = 1225
+\item income\_per\_loan = 5.0
+\item loan\_to\_income = 0.20
+\item rate\_risk = 8.5 - mean\_rate = -1.2
+\end{itemize}
+
+\textbf{Paso 2: Normalizacion}
+\begin{itemize}
+\item age\_norm = 0.15
+\item income\_norm = 0.32
+\item loan\_norm = -0.45
+\item debt\_to\_income\_norm = -0.33
+\end{itemize}
+
+\textbf{Paso 3: XGBoost Prediccion}
+
+200 arboles predicen: ``Riesgo = 0.15'' (15\% probabilidad)
+
+\textbf{Resultado Final:}
+\begin{itemize}
+\item Probabilidad de Impago: 15\%
+\item Recomendacion: APROBAR
+\item Risk Score: 15/100
+\end{itemize}
+
+\subsection*{Cliente 3: Alto Riesgo}
+
+\textbf{Datos Basicos:}
+\begin{itemize}
+\item Edad: 45 anos
+\item Ingreso: USD 25,000/ano
+\item Prestamo: USD 20,000
+\item Tasa: 15\%
+\item Anos empleo: 0.5
+\item Anos historia crediticia: 1
+\item Impago previo?: Si (1)
+\item Deuda/Ingreso: 0.80
+\end{itemize}
+
+\textbf{Normalizacion}
+\begin{itemize}
+\item debt\_to\_income\_norm = 2.15 (MUY ALTO)
+\item employment\_years\_norm = -1.8 (BAJO)
+\item prior\_default = 1 (RIESGO)
+\item interest\_rate\_norm = 1.95 (ALTO)
+\end{itemize}
+
+\textbf{XGBoost Prediccion}
+
+200 arboles predicen: ``Riesgo = 0.78'' (78\% probabilidad)
+
+\textbf{Resultado Final:}
+\begin{itemize}
+\item Probabilidad de Impago: 78\%
+\item Recomendacion: RECHAZAR
+\item Risk Score: 78/100
+\end{itemize}
+
+\section*{6. METRICAS DE DESEMPENO}
+
+\subsection*{En Dataset de Prueba (6,517 clientes)}
+
+\begin{tabular}{|l|r|}
+\hline
+\textbf{Metrica} & \textbf{Valor} \\
+\hline
+AUC-ROC & 0.8983 (89.83\%) \\
+Precision & 0.824 (82.4\%) \\
+Recall & 0.652 (65.2\%) \\
+F1-Score & 0.73 \\
+Especificidad & 0.9512 \\
+\hline
+\end{tabular}
+
+\textbf{Interpretacion:}
+\begin{itemize}
+\item \textbf{AUC 89.83\%:} El modelo discrimina muy bien entre riesgo y no-riesgo
+\item \textbf{Precision 82.4\%:} De los que predecimos como RIESGO, 82.4\% realmente son riesgo
+\item \textbf{Recall 65.2\%:} De todos los clientes reales de RIESGO, identificamos 65.2\%
+\item \textbf{F1 0.73:} Balance bueno entre precision y recall
+\end{itemize}
+
+\section*{7. UMBRAL OPTIMO: 11.6\%}
+
+XGBoost predice probabilidades continuas (0-100\%). Debemos elegir un umbral:
+
+\textbf{Si probabilidad > umbral: RECHAZAR}
+\textbf{Si probabilidad <= umbral: APROBAR}
+
+\subsection*{Analisis de Costo-Beneficio}
+
+\begin{tabular}{|l|r|r|}
+\hline
+\textbf{Umbral} & \textbf{Costo Impago} & \textbf{Costo Falsa Alarma} \\
+\hline
+5\% & USD 5,000 & USD 50,000 \\
+10\% & USD 15,000 & USD 20,000 \\
+11.6\% (OPTIMO) & USD 12,000 & USD 12,000 \\
+15\% & USD 20,000 & USD 5,000 \\
+\hline
+\end{tabular}
+
+En 11.6\%:
+\begin{itemize}
+\item Costo de impago no detectado: USD 12,000 (cliente se fue a la quiebra sin nuestra deteccion)
+\item Costo de falsa alarma: USD 12,000 (cliente rechazado que hubiera pagado)
+\item Costo total minimizado: USD 24,000
+\end{itemize}
+
+\section*{8. VENTAJAS DE XGBOOST}
+
+\begin{enumerate}
+\item \textbf{Velocidad:} ~10 ms por prediccion (RAPIDO)
+\item \textbf{Precision:} 89.83\% AUC (MUY BUENO)
+\item \textbf{Robustez:} Maneja automaticamente desbalance de clases
+\item \textbf{Interpretabilidad:} Podemos entender importancia de cada caracteristica
+\item \textbf{Escalabilidad:} Maneja millones de clientes
+\item \textbf{Estabilidad:} Resultados predecibles y reproducibles
+\end{enumerate}
+
+\section*{9. RESUMEN}
+
+\textbf{XGBoost} es un algoritmo que:
+
+1. Toma 8 caracteristicas basicas del cliente
+2. Crea 18 caracteristicas derivadas (ratios, transformaciones)
+3. Entrena 200 arboles de decision que votan juntos
+4. Predice probabilidad de impago con 89.83\% de precision
+5. Permite establecer umbral optimo (11.6\%) para decision APROBAR/RECHAZAR
+
+\textbf{Resultado:} Sistema automatizado, rapido y confiable para analisis de credito.
+
+\section*{10. GLOSARIO}
+
+\begin{itemize}
+\item \textbf{Arbol de Decision:} Estructura que hace preguntas Si/No para clasificar
+\item \textbf{Boosting:} Combinar multiples modelos debiles en uno fuerte
+\item \textbf{AUC-ROC:} Area bajo la curva de precision vs recall
+\item \textbf{Precision:} De lo que predecimos positivo, cuanto es realmente positivo?
+\item \textbf{Recall:} De lo positivo real, cuanto logramos predecir?
+\item \textbf{F1-Score:} Promedio armonico de precision y recall
+\item \textbf{Normalizacion:} Transformar datos a misma escala
+\item \textbf{StandardScaler:} Metodo de normalizacion (media 0, SD 1)
+\item \textbf{Desbalance:} Cuando hay mas casos de una clase que otra
+\item \textbf{Umbral:} Punto de corte para decision binaria
+\end{itemize}
+
+\end{document}
