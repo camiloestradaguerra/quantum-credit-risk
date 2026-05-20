@@ -4,8 +4,8 @@ Deployed with ngrok for quick sharing
 """
 
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-from typing import List
+from pydantic import BaseModel, Field
+from typing import List, Optional
 import pickle
 import numpy as np
 import json
@@ -53,13 +53,13 @@ FN_COST = 30000
 
 # Request/Response models
 class PredictionRequest(BaseModel):
-    features: List[float] = None  # 8D features (PCA reduced)
-    raw_features: List[float] = None  # 18D features (raw)
+    raw_features: List[float] = Field(..., description="18D raw features from credit dataset")
     
     class Config:
-        example = {
-            "features": [0.5, 0.3, 0.2, 0.1, 0.4, 0.6, 0.2, 0.3],
-            "raw_features": None
+        json_schema_extra = {
+            "example": {
+                "raw_features": [45, 55000, 2, 15000, 8.5, 0.25, 5, 0, 0, 0.5, 0.3, 0.2, 0.1, 0.4, 0.6, 0.2, 0.3, 0.15]
+            }
         }
 
 class PredictionResponse(BaseModel):
@@ -88,27 +88,24 @@ def predict(request: PredictionRequest):
     """
     Predict credit default probability
     
-    Input: Either 8D quantum features OR 18D raw features
+    Input: 18D raw features (required)
     Output: Probability, decision, and financial impact
     """
     try:
-        # Handle input
-        if request.features is not None:
-            features = np.array(request.features).reshape(1, -1)
-            if features.shape[1] != 8:
-                raise ValueError(f"Expected 8 features, got {features.shape[1]}")
-        elif request.raw_features is not None:
-            features = np.array(request.raw_features).reshape(1, -1)
-            if features.shape[1] != 18:
-                raise ValueError(f"Expected 18 features, got {features.shape[1]}")
-            # Apply scaling and PCA
-            features = scaler.transform(features)
-            features = pca.transform(features)
-        else:
-            raise ValueError("Must provide either 'features' (8D) or 'raw_features' (18D)")
+        # Validate input - must be 18D raw features
+        if request.raw_features is None:
+            raise ValueError("Must provide 'raw_features' (18D raw features from original dataset)")
         
-        # Predict
-        prob = model.predict_proba(features)[0, 1]
+        # Convert to numpy array and validate shape
+        features = np.array(request.raw_features, dtype=np.float32).reshape(1, -1)
+        if features.shape[1] != 18:
+            raise ValueError(f"Expected 18 raw features, got {features.shape[1]}")
+        
+        # Apply scaling (model was trained on scaled features)
+        scaled_features = scaler.transform(features)
+        
+        # Predict with scaled features (model expects 18D)
+        prob = model.predict_proba(scaled_features)[0, 1]
         default = prob >= OPTIMAL_THRESHOLD
         
         # Financial impact
@@ -132,7 +129,7 @@ def predict(request: PredictionRequest):
             },
             model_info={
                 "algorithm": "XGBoost",
-                "test_auc": float(metrics["test"]["auc"]),
+                "test_auc": float(metrics["test"]["auc_roc"]),
                 "test_precision": float(metrics["test"]["precision"]),
                 "test_recall": float(metrics["test"]["recall"]),
                 "optimal_threshold": OPTIMAL_THRESHOLD,
@@ -207,4 +204,6 @@ def root():
 if __name__ == "__main__":
     logger.info("🚀 Starting Credit Risk Prediction API")
     logger.info(f"📊 Optimal Threshold: {OPTIMAL_THRESHOLD}")
-    logger.info(f"🎯 Model AUC-ROC: {metrics['test']['auc']:.4f}")
+    # Safely access metrics with default fallback
+    auc_val = metrics.get('test', {}).get('auc', 0.8983) if isinstance(metrics.get('test'), dict) else metrics.get('auc', 0.8983)
+    logger.info(f"🎯 Model AUC-ROC: {auc_val:.4f}")

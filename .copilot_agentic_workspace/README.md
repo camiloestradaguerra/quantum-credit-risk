@@ -421,7 +421,188 @@ All scripts include:
 
 ---
 
-## 📞 Troubleshooting
+## � FastAPI Server - Production Ready Predictions
+
+### Start the API Server
+
+```bash
+# Activate virtual environment first
+cd .copilot_agentic_workspace
+venv_quantum_ml\Scripts\activate.bat  # Windows
+# or: source venv_quantum_ml/bin/activate  # macOS/Linux
+
+# Start the server
+python -m uvicorn main:app --host 0.0.0.0 --port 8000
+```
+
+**Server will be available at:**
+- API: `http://localhost:8000`
+- Swagger UI (interactive docs): `http://localhost:8000/docs`
+- ReDoc: `http://localhost:8000/redoc`
+
+### API Endpoints
+
+#### 1. **Health Check** `GET /health`
+Verify the API is running and load model metrics
+
+```bash
+curl http://localhost:8000/health
+```
+
+**Response:**
+```json
+{
+  "status": "OK",
+  "timestamp": "2026-05-20T03:30:00.000Z",
+  "model": "XGBoost Credit Risk Classifier",
+  "threshold": 0.116,
+  "auc_roc": 0.8983,
+  "version": "1.0.0"
+}
+```
+
+#### 2. **Make Prediction** `POST /predict`
+Predict credit default probability for a single client
+
+**Request Body (18D raw features):**
+```json
+{
+  "raw_features": [45, 55000, 2, 15000, 8.5, 0.25, 5, 0, 0, 0.5, 0.3, 0.2, 0.1, 0.4, 0.6, 0.2, 0.3, 0.15]
+}
+```
+
+**Feature Mapping (18D features):**
+- `f0`: Age
+- `f1`: Annual Income  
+- `f2`: Num Accounts
+- `f3`: Total Credit Limit
+- `f4`: Interest Rate
+- `f5`: Credit Utilization
+- `f6`: Payment History Days
+- `f7`: Recent Default (binary)
+- `f8`: Recent Inquiry (binary)
+- `f9-f17`: Risk metrics (engineered features)
+
+**Response (200 OK):**
+```json
+{
+  "probability": 0.5947,
+  "default": true,
+  "recommendation": "❌ RECHAZAR - Alto riesgo de default",
+  "financial_impact": {
+    "impact_type": "FN Prevention",
+    "expected_value": 30000,
+    "threshold_used": 0.116
+  },
+  "model_info": {
+    "algorithm": "XGBoost",
+    "test_auc": 0.8983,
+    "test_precision": 0.3794,
+    "test_recall": 0.9304,
+    "optimal_threshold": 0.116,
+    "training_method": "Cross-Validated (5-Fold)"
+  }
+}
+```
+
+#### 3. **Get Model Info** `GET /model_info`
+Retrieve detailed model metadata and performance metrics
+
+```bash
+curl http://localhost:8000/model_info
+```
+
+#### 4. **Batch Predictions** `POST /predict_batch`
+Make multiple predictions in a single request
+
+**Request Body:**
+```json
+[
+  {"raw_features": [45, 55000, 2, 15000, 8.5, 0.25, 5, 0, 0, 0.5, 0.3, 0.2, 0.1, 0.4, 0.6, 0.2, 0.3, 0.15]},
+  {"raw_features": [35, 80000, 5, 50000, 3.5, 0.15, 1, 1, 1, 0.1, 0.05, 0.05, 0.02, 0.08, 0.2, 0.05, 0.1, 0.03]}
+]
+```
+
+### Python Client Example
+
+```python
+import requests
+import json
+
+# Define client features
+payload = {
+    'raw_features': [45, 55000, 2, 15000, 8.5, 0.25, 5, 0, 0, 0.5, 0.3, 0.2, 0.1, 0.4, 0.6, 0.2, 0.3, 0.15]
+}
+
+# Make prediction
+response = requests.post('http://localhost:8000/predict', json=payload)
+result = response.json()
+
+# Display results
+print(f"Default Probability: {result['probability']:.2%}")
+print(f"Decision: {result['recommendation']}")
+print(f"Expected Financial Value: ${result['financial_impact']['expected_value']:,}")
+```
+
+### JavaScript/Node.js Example
+
+```javascript
+const payload = {
+  raw_features: [45, 55000, 2, 15000, 8.5, 0.25, 5, 0, 0, 0.5, 0.3, 0.2, 0.1, 0.4, 0.6, 0.2, 0.3, 0.15]
+};
+
+fetch('http://localhost:8000/predict', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(payload)
+})
+.then(r => r.json())
+.then(result => {
+  console.log(`Default Probability: ${(result.probability * 100).toFixed(2)}%`);
+  console.log(`Decision: ${result.recommendation}`);
+  console.log(`Expected Value: $${result.financial_impact.expected_value.toLocaleString()}`);
+});
+```
+
+### cURL Examples
+
+**Single Prediction:**
+```bash
+curl -X POST http://localhost:8000/predict \
+  -H "Content-Type: application/json" \
+  -d '{"raw_features": [45, 55000, 2, 15000, 8.5, 0.25, 5, 0, 0, 0.5, 0.3, 0.2, 0.1, 0.4, 0.6, 0.2, 0.3, 0.15]}'
+```
+
+**Health Check:**
+```bash
+curl http://localhost:8000/health
+```
+
+### Model Performance
+
+| Metric | Value |
+|--------|-------|
+| **AUC-ROC** | 0.8983 |
+| **Precision** | 37.94% |
+| **Recall** | 92.97% |
+| **Accuracy** | 64.86% |
+| **Optimal Threshold** | 0.1160 |
+| **Test Samples** | 6,517 |
+| **Default Rate** | 21.82% |
+
+### Financial Impact
+
+| Outcome | Value |
+|---------|-------|
+| **True Positive** (Default prevented) | +$5,000 |
+| **True Negative** (Good customer) | +$500 |
+| **False Positive** (Lost customer) | -$800 |
+| **False Negative** (Actual default) | -$30,000 |
+| **Net Expected Value** | $3,346,900 |
+
+---
+
+## �📞 Troubleshooting
 
 ### Issue: "ModuleNotFoundError: No module named 'qiskit'"
 
@@ -452,6 +633,30 @@ cd .copilot_agentic_workspace
 # Copy dataset if missing
 cp ../data/financial_risk_dataset.csv ./data/
 ```
+
+### Issue: FastAPI Server Won't Start
+
+```bash
+# Check if port 8000 is already in use
+# Windows:
+netstat -ano | findstr :8000
+
+# macOS/Linux:
+lsof -i :8000
+
+# Use different port if needed
+python -m uvicorn main:app --port 8080
+```
+
+### Issue: API Returns "Feature shape mismatch"
+
+**Error:** `"Feature shape mismatch, expected: 18, got X"`
+
+**Solution:** Ensure you're sending exactly 18 raw features in the request:
+```json
+{"raw_features": [value1, value2, ..., value18]}
+```
+Not 8D features - the API expects 18D raw features that will be normalized internally.
 
 ---
 
