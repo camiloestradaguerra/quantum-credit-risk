@@ -483,6 +483,8 @@ Predict credit default probability for a single client
 - `f8`: Recent Inquiry (binary)
 - `f9-f17`: Risk metrics (engineered features)
 
+**📍 Full feature documentation:** See [FEATURES_MAPPING.md](FEATURES_MAPPING.md) for complete feature names, formulas, and ranges.
+
 **Response (200 OK):**
 ```json
 {
