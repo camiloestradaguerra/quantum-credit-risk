@@ -1,19 +1,18 @@
-# 🤖 AGENTES VIRTUALES: Definición de Roles, Objetivos y Límites
+# 🤖 AGENTS - Definición de Roles y Arquitectura
 
-**Última actualización:** Mayo 19, 2026  
-**Arquitectura:** Híbrida Quantum + Classical ML (Qiskit 2.4.1 + XGBoost 3.2.0)  
-**Dataset:** Credit Risk Dataset (32,581 registros, 12 features, 21.82% default rate)  
-**Objetivo Principal:** Predicción de incumplimiento de préstamos con optimización de threshold (fin-tuning)
+**Última actualización:** Mayo 20, 2026  
+**Status:** ✅ PRODUCCIÓN  
+**Arquitectura:** REST API con Feature Engineering Automático  
+**Objetivo Principal:** Predicción de incumplimiento de préstamos mediante XGBoost optimizado + Cloudflare Tunnel
 
 ---
 
 ## 📋 Tabla de Contenidos
 
-1. [Agent 1: Data_Classical_ML_Agent](#agent-1-data_classical_ml_agent)
-2. [Agent 2: Quantum_ML_Agent](#agent-2-quantum_ml_agent)
-3. [Agent 3: Risk_Validator_Agent](#agent-3-risk_validator_agent)
-4. [Workflows de Coordinación](#workflows-de-coordinación)
-5. [Handoff Protocol](#handoff-protocol)
+1. [Descripción General](#descripción-general)
+2. [FastAPI Server (Agente Principal)](#fastapi-server-agente-principal)
+3. [Workflows](#workflows)
+4. [Handoff Protocol](#handoff-protocol)
 
 ---
 

@@ -1,53 +1,55 @@
-# 💬 PROMPTS & INSTRUCTIONS: System Prompts Personalizados para Copilot
+# 💬 PROMPTS & INSTRUCTIONS - API Development Guidelines
 
-**Última actualización:** Mayo 2026  
-**Objetivo:** Instrucciones exactas a pasar a Copilot para generar código óptimo sin data leakage, memory overflow, o errores de configuración
+**Última actualización:** Mayo 20, 2026  
+**Status:** ✅ PRODUCCIÓN  
+**Framework:** FastAPI + XGBoost  
 
 ---
 
 ## 📋 Tabla de Contenidos
 
-1. [Meta-Instructions Generales](#meta-instructions-generales)
-2. [System Prompt: Data_Classical_ML_Agent](#system-prompt-data_classical_ml_agent)
-3. [System Prompt: Quantum_ML_Agent](#system-prompt-quantum_ml_agent)
-4. [System Prompt: Risk_Validator_Agent](#system-prompt-risk_validator_agent)
-5. [Critical Warnings Template](#critical-warnings-template)
-6. [Code Quality Checklist](#code-quality-checklist)
+1. [Principios de Desarrollo](#principios-de-desarrollo)
+2. [Architecture Decisions](#architecture-decisions)
+3. [Code Standards](#code-standards)
+4. [Feature Engineering Rules](#feature-engineering-rules)
+5. [Testing Requirements](#testing-requirements)
 
 ---
 
-## Meta-Instructions Generales
+## Principios de Desarrollo
 
-Antes de pasar ANY prompt a Copilot, asegúrate de comunicar estos meta-principios:
+### ✅ STANDARDS OBLIGATORIOS:
 
-### ✅ HAZLO SIEMPRE:
+```yaml
+1. CLARIDAD DE RESPONSABILIDADES:
+   - Cada función tiene un propósito específico
+   - Límites claros entre components
+   - Nombres autodescriptivos
 
-```
-1. EXPLICITACIÓN DE RESPONSABILIDADES:
-   - Cada prompt define CLARAMENTE qué hace el agente y qué NO hace
-   - No debe haber ambigüedad sobre boundaries
-
-2. DATA LEAKAGE PREVENTION:
-   - Escalado DESPUÉS de split, no antes
-   - SMOTE SOLO en training set
-   - Cross-validation estratificada
+2. VALIDACIÓN DE DATOS:
+   - Pydantic models para todos los inputs
+   - Range checking automático
+   - Type hints en todas las funciones
 
 3. REPRODUCIBILIDAD:
-   - Seeds explícitos (numpy, random, qiskit)
-   - Random states en todos los random-dependent functions
-   - Comentarios explicando cada decisión
+   - Seeds explícitos para random operations
+   - Modelos versionados (en /models)
+   - Resultados determinísticos
 
 4. ERROR HANDLING:
    - Try/except para operaciones críticas
-   - Logging detallado de cada paso
-   - Checkpoints intermedios (guardar resultados)
+   - Logging detallado (arquivo en /logs)
+   - Clear error messages al usuario
 
 5. MEMORY EFFICIENCY:
-   - dtype=float32 cuando sea posible (50% memory saving)
-   - Liberar memoria después de operaciones grandes
-   - Chunking para datasets > 5GB
+   - dtype=float32 cuando sea posible
+   - np.float32 en arrays grandes
+   - Liberar memoria después de operaciones
 
-6. COMENTARIOS:
+6. DOCUMENTACIÓN:
+   - Docstrings en todas las funciones
+   - Ejemplos de uso
+   - Parámetros documentados
    - Explicar el WHY, no solo el WHAT
    - Especificar por qué se elige cada librería/parámetro
    - Link a documentación relevante

@@ -1,53 +1,117 @@
-# 🏗️ Hybrid Quantum + Classical ML Architecture for Credit Risk Analysis
+# � Credit Risk Prediction API - Production Ready
 
-**Project:** Credit Risk Analysis using XGBoost (✅ COMPLETED) and Quantum SVM (⏳ IN EXECUTION)
-**Date:** May 19, 2026  
-**Status:** ✅ Classical ML Pipeline OPTIMIZED & VALIDATED | ⏳ Quantum ML Pipeline EXECUTING | ✅ Documentation Complete
-**Next Phase:** Compare results & Deploy Classical XGBoost to production
+**Project:** Credit Risk Prediction REST API (XGBoost + FastAPI)  
+**Date:** May 20, 2026  
+**Status:** ✅ **PRODUCTIVO - API PÚBLICA ACTIVA**  
+**URL Pública:** https://encouraged-colleges-benjamin-magnitude.trycloudflare.com  
 
 ---
 
-## 📋 Quick Start
+## 🚀 Quick Start
+
+### 🌐 Acceso Inmediato (YA PÚBLICO)
+
+**La API está corriendo AHORA en:**
+```
+https://encouraged-colleges-benjamin-magnitude.trycloudflare.com
+```
+
+**Documentación Interactiva (Swagger UI):**
+```
+https://encouraged-colleges-benjamin-magnitude.trycloudflare.com/docs
+```
+
+**Test de Salud:**
+```bash
+curl https://encouraged-colleges-benjamin-magnitude.trycloudflare.com/health
+```
+
+---
+
+## 📊 Predicción de Riesgo Crediticio
+
+### ✅ Endpoint: POST /predict
+
+**Request:**
+```bash
+curl -X POST https://encouraged-colleges-benjamin-magnitude.trycloudflare.com/predict \
+  -H "Content-Type: application/json" \
+  -d '{
+    "raw_features": [45, 55000, 2, 15000, 8.5, 0.25, 0, 10]
+  }'
+```
+
+**Response:**
+```json
+{
+  "probability": 0.5771,
+  "default": false,
+  "recommendation": "REJECTED",
+  "financial_impact": -30000,
+  "risk_score": 0.5771,
+  "confidence": 0.95,
+  "model_info": {
+    "algorithm": "XGBoost",
+    "version": "3.2.0",
+    "threshold": 0.1160,
+    "auc": 0.8983
+  }
+}
+```
+
+### 📝 Features Esperados (8 exactamente)
+
+| Índice | Feature | Tipo | Rango | Ejemplo |
+|--------|---------|------|-------|---------|
+| 0 | age | int/float | 18-100 | 45 |
+| 1 | income | int/float | 1000+ | 55000 |
+| 2 | emp_length | int/float | 0-60 | 2 |
+| 3 | loan_amount | int/float | 1000-500000 | 15000 |
+| 4 | interest_rate | int/float | 0.5-25 | 8.5 |
+| 5 | debt_to_income | int/float | 0-1 | 0.25 |
+| 6 | prior_default | int | 0-1 | 0 |
+| 7 | credit_history | int/float | 0-80 | 10 |
+
+---
+
+## 💻 Local Development
 
 ### Prerequisites
 
-- Windows 10+ or macOS/Linux
-- Python 3.10+ (not installed? [Download here](https://www.python.org/downloads/))
-- ~8 GB RAM (minimum 4 GB)
-- ~5 GB disk space
+- Windows 10+ o macOS/Linux
+- Python 3.11.7
+- 4 GB RAM mínimo
 
 ### Setup (Windows)
 
 ```bash
-# 1. Navigate to workspace
+# 1. Navegar a workspace
 cd .copilot_agentic_workspace
 
-# 2. Run setup script
-setup.bat
+# 2. Crear/Activar virtual environment
+python -m venv venv_quantum_ml
+.\venv_quantum_ml\Scripts\activate
 
-# 3. Activate virtual environment (if not already)
-venv_quantum_ml\Scripts\activate.bat
-
-# 4. Verify installation
-python -c "import xgboost; import qiskit; print('✓ All packages installed')"
-```
-
-### Setup (macOS/Linux)
-
-```bash
-# 1. Create virtual environment
-python3 -m venv venv_quantum_ml
-
-# 2. Activate
-source venv_quantum_ml/bin/activate
-
-# 3. Install dependencies
-pip install --upgrade pip
+# 3. Instalar dependencias
 pip install -r requirements.txt
 
-# 4. Verify
-python -c "import xgboost; import qiskit; print('✓ All packages installed')"
+# 4. Verificar
+python -c "import fastapi; import xgboost; print('✓ Ready')"
 ```
+
+### Ejecutar Servidor Local
+
+```bash
+# Terminal 1: FastAPI server
+uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+# Terminal 2: Exponer públicamente (opcional)
+python expose_cloudflare.py
+```
+
+**Acceso Local:**
+- Swagger UI: http://localhost:8000/docs
+- API: http://localhost:8000/predict
 
 ---
 
@@ -55,46 +119,32 @@ python -c "import xgboost; import qiskit; print('✓ All packages installed')"
 
 ```
 .copilot_agentic_workspace/
-├── agents.md                          # Agent roles & responsibilities
-├── skills.md                          # Tools & dependencies
-├── prompts_and_instructions.md        # System prompts for Copilot
-├── mcp_servers.md                     # MCP-style architecture
+├── 📄 CHANGELOG.md                    # Historial completo de cambios
+├── 📄 PROJECT_LOG.md                  # Registro de actividades diarias
+├── 📄 DEPLOYMENT.md                   # Guía de producción + Cloudflare
+├── 📄 agents.md                       # Arquitectura de componentes
+├── 📄 skills.md                       # Funcionalidades de la API
+├── 📄 prompts_and_instructions.md     # Standards de desarrollo
 │
-├── documentation/
-│   ├── CLASSICAL_ML_MODEL.md          # XGBoost mathematics
-│   ├── QUANTUM_ML_MODEL.md            # Quantum computing & QSVM
-│   ├── MODEL_COMPARISON.md            # Classical vs Quantum
-│   └── zz_feature_map.png             # Quantum circuit visualization
+├── 📄 main.py                         # ✅ FastAPI REST API
+├── 📄 expose_cloudflare.py            # ✅ Script de deployment público
+├── 📄 requirements.txt                # ✅ Dependencias Python
+├── 📄 .env                            # ✅ Configuración
 │
-├── scripts/
-│   ├── outlier_analysis.py            # ✅ Executed - Outlier detection
-│   ├── 1_classical_ml_pipeline.py     # ✅ Original version (baseline)
-│   ├── 1_classical_ml_pipeline_optimized.py # ✅ NEW - With threshold optimization
-│   ├── 2_quantum_ml_pipeline.py       # ⏳ In execution - QSVM training
-│   └── 3_risk_validator.py            # ✅ Executed - Model comparison
+├── 📁 models/
+│   ├── xgb_classical.pkl              # ✅ XGBoost modelo (18 features)
+│   ├── scaler.pkl                     # ✅ StandardScaler normalization
+│   └── classical_metrics.json         # ✅ Métricas: AUC 0.8983
 │
-├── data/
-│   ├── credit_risk_dataset.csv        # ✅ Real dataset (32,581 × 12, 21.82% default)
-│   ├── outliers_report.json           # ✅ Outlier analysis results
-│   ├── quantum_X_train_8d.npy         # ✅ PCA-reduced features for Quantum (34,642×8)
-│   └── quantum_X_test_8d.npy          # ✅ PCA-reduced test features (6,517×8)
+├── 📁 logs/
+│   ├── classical_ml_pipeline.log
+│   ├── risk_validator.log
+│   └── ...
 │
-├── models/
-│   ├── xgb_classical.pkl              # Trained XGBoost model
-│   ├── qsvm_model.pkl                 # Trained QSVM model
-│   ├── classical_metrics.json         # XGBoost metrics
-│   ├── quantum_metrics.json           # QSVM metrics
-│   └── final_report.json              # Risk Validator recommendation
+├── 📁 data/
+│   └── financial_risk_dataset.csv     # Dataset original (32,581 registros)
 │
-├── logs/
-│   ├── outlier_analysis.log           # Outlier analysis execution log
-│   ├── classical_ml_pipeline.log      # Classical ML pipeline log
-│   └── quantum_ml_pipeline.log        # Quantum ML pipeline log
-│
-├── requirements.txt                   # Python dependencies
-├── .env                               # Environment configuration
-├── setup.bat                          # Windows setup script
-└── README.md                          # This file
+└── 📁 venv_quantum_ml/                # Virtual environment
 ```
 
 ---
