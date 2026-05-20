@@ -1,36 +1,14 @@
 \documentclass[11pt,a4paper,spanish]{article}
-\usepackage[utf-8]{inputenc}
 \usepackage[spanish]{babel}
+\usepackage{fontspec}
 \usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry}
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{graphicx}
-\usepackage{xcolor}
-\usepackage{listings}
 \usepackage{array}
 \usepackage{booktabs}
 \usepackage{hyperref}
-\usepackage{tikz}
-\usepackage{fancyhdr}
 \usepackage{float}
-
-\pagestyle{fancy}
-\fancyhf{}
-\rhead{\textit{XGBoost para Riesgo Crediticio}}
-\lhead{\textit{Análisis Explicativo}}
-\cfoot{\thepage}
-
-\lstset{
-    language=Python,
-    basicstyle=\ttfamily\small,
-    breaklines=true,
-    postbreak=\mbox{\textcolor{red}{$\hookrightarrow$}\space},
-    backgroundcolor=\color{gray!10},
-    keywordstyle=\color{blue},
-    commentstyle=\color{gray},
-    stringstyle=\color{red},
-    showstringspaces=false
-}
 
 \title{\textbf{XGBoost para Análisis de Riesgo Crediticio} \\ {\large Guía Explicativa Paso a Paso}}
 \author{Material Educativo - Departamento de Riesgo}
@@ -85,18 +63,7 @@ XGBoost está construido sobre \textbf{árboles de decisión}. Un árbol es simp
 
 \textbf{Ejemplo visual de un árbol simple:}
 
-\begin{tikzpicture}[node distance=2cm]
-    \node(A) [draw, rectangle] {¿Ingreso > \$40,000?};
-    \node(B) [draw, rectangle, below left of=A, xshift=-2.5cm] {¿Edad > 30?};
-    \node(C) [draw, rectangle, below right of=A, xshift=2.5cm] {RIESGO BAJO};
-    \node(D) [draw, rectangle, below left of=B, xshift=-2cm] {RIESGO BAJO};
-    \node(E) [draw, rectangle, below right of=B, xshift=2cm] {RIESGO ALTO};
-    
-    \draw[->] (A) -- (B) node[midway, left] {Sí};
-    \draw[->] (A) -- (C) node[midway, right] {No};
-    \draw[->] (B) -- (D) node[midway, left] {Sí};
-    \draw[->] (B) -- (E) node[midway, right] {No};
-\end{tikzpicture}
+[Estructura: Ingreso > $40k? --> Edad > 30? --> Decisiones finales]
 
 \subsection{El Truco de XGBoost: Muchos Árboles Débiles}
 
@@ -423,30 +390,8 @@ Con estos costos, el banco determinó que el \textbf{umbral óptimo es 11.6\%}:
 
 % ============================================================================
 \section{Resumen del Flujo Completo}
-% ============================================================================
 
-\begin{tikzpicture}[
-    node distance=2cm,
-    block/.style={rectangle, draw, minimum width=3cm, minimum height=1cm, text centered},
-    arrow/.style={->, >=stealth, thick}
-]
-
-\node(start) [block] {Datos del Cliente};
-\node(norm) [block, below of=start] {Normalizar};
-\node(feat) [block, below of=norm] {Ingeniería de Características};
-\node(model) [block, below of=feat] {Pasar por 200 Árboles};
-\node(vote) [block, below of=model] {Promediar Votos};
-\node(threshold) [block, below of=vote] {Comparar con Umbral (11.6\%)};
-\node(predict) [block, below of=threshold] {Predicción: Riesgo o No-Riesgo};
-
-\draw[arrow] (start) -- (norm);
-\draw[arrow] (norm) -- (feat);
-\draw[arrow] (feat) -- (model);
-\draw[arrow] (model) -- (vote);
-\draw[arrow] (vote) -- (threshold);
-\draw[arrow] (threshold) -- (predict);
-
-\end{tikzpicture}
+[Flujo: Datos Cliente --> Normalizar --> Ingeniería Características --> 200 Árboles --> Promedio Votos --> Umbral 11.6\% --> Predicción]
 
 ---
 

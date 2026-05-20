@@ -1,36 +1,14 @@
 \documentclass[11pt,a4paper,spanish]{article}
-\usepackage[utf-8]{inputenc}
 \usepackage[spanish]{babel}
+\usepackage{fontspec}
 \usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry}
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{graphicx}
-\usepackage{xcolor}
-\usepackage{listings}
 \usepackage{array}
 \usepackage{booktabs}
 \usepackage{hyperref}
-\usepackage{tikz}
-\usepackage{fancyhdr}
 \usepackage{float}
-
-\pagestyle{fancy}
-\fancyhf{}
-\rhead{\textit{QSVM Cuántico para Riesgo Crediticio}}
-\lhead{\textit{Análisis Explicativo}}
-\cfoot{\thepage}
-
-\lstset{
-    language=Python,
-    basicstyle=\ttfamily\small,
-    breaklines=true,
-    postbreak=\mbox{\textcolor{red}{$\hookrightarrow$}\space},
-    backgroundcolor=\color{gray!10},
-    keywordstyle=\color{blue},
-    commentstyle=\color{gray},
-    stringstyle=\color{red},
-    showstringspaces=false
-}
 
 \title{\textbf{QSVM Cuántico para Análisis de Riesgo Crediticio} \\ {\large Guía Didáctica Completa: PCA + Computación Cuántica + SVM}}
 \author{Material Educativo - Departamento de Riesgo}
@@ -141,31 +119,7 @@ PCA responde: \textbf{¿Cuáles son las direcciones más importantes en mis dato
 
 Imagine que tiene datos en 2D (plano):
 
-\begin{tikzpicture}
-    % Plano con puntos
-    \begin{axis}[
-        xlabel={Característica A},
-        ylabel={Característica B},
-        width=8cm,
-        height=6cm,
-        grid=major
-    ]
-    
-    \addplot[only marks, mark=*] coordinates {
-        (1,2) (1.5,2.3) (2,2.8) (2.5,3.1) (3,3.5)
-        (1.1,2.1) (1.4,2.2) (2.1,2.9) (2.4,3.0) (3.1,3.4)
-    };
-    
-    % Línea de máxima varianza
-    \addplot[red, thick, no markers] coordinates {(0,0.5) (4,4.5)};
-    \node[red] at (2.5, 3.5) {PC1};
-    
-    % Línea de mínima varianza
-    \addplot[blue, thick, no markers] coordinates {(2,0.2) (2,4.2)};
-    \node[blue] at (2.2, 2) {PC2};
-    
-    \end{axis}
-\end{tikzpicture}
+[Gráfica: PC1 y PC2 con distribución de puntos - máxima y mínima varianza]
 
 \textbf{Explicación:}
 
@@ -358,31 +312,7 @@ Desglose:
 
 \textbf{Visualización conceptual:}
 
-\begin{tikzpicture}
-    \draw (0,0) -- (5,0);
-    \draw (0,0.5) -- (5,0.5);
-    \draw (0,1) -- (5,1);
-    \draw (0,1.5) -- (5,1.5);
-    
-    \node[left] at (-0.5, 0) {Qubit 1};
-    \node[left] at (-0.5, 0.5) {Qubit 2};
-    \node[left] at (-0.5, 1) {Qubit 3};
-    \node[left] at (-0.5, 1.5) {Qubit 4};
-    
-    \node at (0.5, 0) {$R$};
-    \node at (1.5, 0) {$XX$};
-    \node at (2.5, 0) {$R$};
-    \node at (3.5, 0) {$XX$};
-    \node at (4.5, 0) {Medir};
-    
-    \node at (0.5, 0.5) {$R$};
-    \node at (1.5, 0.5) {$XX$};
-    \node at (2.5, 0.5) {$R$};
-    \node at (3.5, 0.5) {$XX$};
-    \node at (4.5, 0.5) {Medir};
-    
-    % ... repetir para otros qubits
-\end{tikzpicture}
+[Circuito cuántico: 4 qubits con rotaciones (R), puertas de enredo (XX), y mediciones]
 
 (Esto es una representación simplificada)
 
@@ -547,34 +477,7 @@ SVM es un algoritmo que \textbf{dibuja una línea} (o límite) para separar dos 
 
 \textbf{Ejemplo simple en 2D:}
 
-\begin{tikzpicture}
-    \begin{axis}[
-        xlabel={Característica 1},
-        ylabel={Característica 2},
-        width=8cm,
-        height=6cm,
-        grid=major
-    ]
-    
-    % Clientes de riesgo (X roja)
-    \addplot[mark=x, color=red, only marks, mark size=5] coordinates {
-        (1,1) (1.5,1.2) (2,1.5) (1.2,0.8)
-    };
-    
-    % Clientes sin riesgo (O azul)
-    \addplot[mark=o, color=blue, only marks, mark size=5] coordinates {
-        (3,3) (3.5,3.2) (4,3.5) (3.2,2.8)
-    };
-    
-    % Línea separadora
-    \addplot[black, thick, no markers] coordinates {(0,0) (5,5)};
-    
-    \node at (2.5, 1.5) {RIESGO};
-    \node at (3.5, 4.5) {NO RIESGO};
-    \node at (2.5, 2.8) {LÍMITE};
-    
-    \end{axis}
-\end{tikzpicture}
+[Gráfica: RIESGO (X roja) vs NO RIESGO (O azul) con línea separadora]
 
 \textbf{Lo que hace SVM:}
 
