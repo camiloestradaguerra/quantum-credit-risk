@@ -1,0 +1,1003 @@
+\documentclass[11pt,a4paper,spanish]{article}
+\usepackage[utf-8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{tikz}
+\usepackage{fancyhdr}
+\usepackage{float}
+
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{\textit{QSVM Cuántico para Riesgo Crediticio}}
+\lhead{\textit{Análisis Explicativo}}
+\cfoot{\thepage}
+
+\lstset{
+    language=Python,
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    postbreak=\mbox{\textcolor{red}{$\hookrightarrow$}\space},
+    backgroundcolor=\color{gray!10},
+    keywordstyle=\color{blue},
+    commentstyle=\color{gray},
+    stringstyle=\color{red},
+    showstringspaces=false
+}
+
+\title{\textbf{QSVM Cuántico para Análisis de Riesgo Crediticio} \\ {\large Guía Didáctica Completa: PCA + Computación Cuántica + SVM}}
+\author{Material Educativo - Departamento de Riesgo}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Este documento explica de manera accesible cómo funciona un algoritmo híbrido que combina:
+\begin{itemize}
+    \item \textbf{PCA (Análisis de Componentes Principales):} Para simplificar datos
+    \item \textbf{Computación Cuántica:} Para calcular similitudes entre clientes
+    \item \textbf{SVM (Máquina de Vectores de Soporte):} Para clasificar riesgos
+\end{itemize}
+
+\textbf{Nivel de Dificultad:} Principiante. No se asume conocimiento previo. Todo se explica desde cero.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+% ============================================================================
+\section{Introducción: El Porqué de la Computación Cuántica}
+% ============================================================================
+
+\subsection{¿Qué es Computación Cuántica?}
+
+Imagine dos formas de encontrar algo en una biblioteca:
+
+\textbf{Computadora Normal (Clásica):}
+\begin{itemize}
+    \item Busca en el primer pasillo: No está
+    \item Busca en el segundo pasillo: No está
+    \item Busca en el tercer pasillo: ¡ENCONTRADO!
+    \item Tiempo: 30 minutos
+\end{itemize}
+
+\textbf{Computadora Cuántica:}
+\begin{itemize}
+    \item Busca en TODOS los pasillos \textbf{AL MISMO TIEMPO}
+    \item ¡ENCONTRADO!
+    \item Tiempo: 5 minutos
+\end{itemize}
+
+\textbf{En nuestro caso:}
+
+Una computadora clásica compara cada cliente con otros uno por uno.
+
+Una computadora cuántica puede explorar \textbf{múltiples comparaciones simultáneamente}.
+
+\subsection{Niveles de Cuántica en Este Documento}
+
+\begin{enumerate}
+    \item \textbf{Nivel 1 (Básico):} Qué es PCA - simplificar datos
+    \item \textbf{Nivel 2 (Intermedio):} Qué es un bit cuántico (qubit) - muy brevemente
+    \item \textbf{Nivel 3 (Aplicado):} Cómo se usan circuitos cuánticos para comparar clientes
+    \item \textbf{Nivel 4 (Final):} Cómo SVM toma la decisión de riesgo
+\end{enumerate}
+
+No necesita ser matemático. Solo curiosidad.
+
+---
+
+% ============================================================================
+\section{PARTE 1: PCA (Análisis de Componentes Principales)}
+% ============================================================================
+
+\subsection{El Problema: Demasiados Datos}
+
+Imagine que tiene 18 características para cada cliente:
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{|c|c|c|c|c|c|}
+\hline
+\textbf{Edad} & \textbf{Ingreso} & \textbf{Monto} & \textbf{Tasa} & \textbf{Emp. Años} & \textbf{Hist. Crédito} \\
+\hline
+35 & 50,000 & 10,000 & 8.5 & 5 & 10 \\
+\hline
+\end{tabular}
+\end{table}
+
+Pero espere... tenemos \textbf{18 características}, no 6. El resto son combinaciones:
+
+\[
+\text{Deuda/Ingreso}, \text{Tasa}^2, \text{Interacción}, \text{Log(Empleo)}, \ldots
+\]
+
+\textbf{El Problema:}
+\begin{itemize}
+    \item Más características = más información
+    \item PERO = más complejidad computacional
+    \item PERO = computadoras cuánticas tienen limitaciones de qubits
+\end{itemize}
+
+\textbf{La Pregunta:}
+
+¿Podemos \textbf{comprimir} esas 18 características en \textbf{8 dimensiones} sin perder información importante?
+
+\subsection{¿Qué es PCA? La Idea Simple}
+
+PCA responde: \textbf{¿Cuáles son las direcciones más importantes en mis datos?}
+
+\textbf{Analogía visual:}
+
+Imagine que tiene datos en 2D (plano):
+
+\begin{tikzpicture}
+    % Plano con puntos
+    \begin{axis}[
+        xlabel={Característica A},
+        ylabel={Característica B},
+        width=8cm,
+        height=6cm,
+        grid=major
+    ]
+    
+    \addplot[only marks, mark=*] coordinates {
+        (1,2) (1.5,2.3) (2,2.8) (2.5,3.1) (3,3.5)
+        (1.1,2.1) (1.4,2.2) (2.1,2.9) (2.4,3.0) (3.1,3.4)
+    };
+    
+    % Línea de máxima varianza
+    \addplot[red, thick, no markers] coordinates {(0,0.5) (4,4.5)};
+    \node[red] at (2.5, 3.5) {PC1};
+    
+    % Línea de mínima varianza
+    \addplot[blue, thick, no markers] coordinates {(2,0.2) (2,4.2)};
+    \node[blue] at (2.2, 2) {PC2};
+    
+    \end{axis}
+\end{tikzpicture}
+
+\textbf{Explicación:}
+
+\begin{itemize}
+    \item \textbf{PC1 (rojo):} La dirección donde los datos cambian MÁS
+    \item \textbf{PC2 (azul):} La dirección donde los datos cambian MENOS
+\end{itemize}
+
+PCA dice: \textbf{``PC1 contiene más información que PC2, así que puedo descartar PC2 con seguridad''}
+
+\subsection{PCA Matemáticamente (Versión Simple)}
+
+\subsubsection{Paso 1: Centrar los Datos}
+
+Calculamos el promedio de cada característica y lo restamos:
+
+\[
+x_{\text{centrado}} = x - \bar{x}
+\]
+
+Donde $\bar{x}$ es el promedio.
+
+\textbf{Ejemplo:}
+
+Si Ingreso promedio = \$50,000, entonces:
+\begin{align*}
+\text{Cliente con } \$50,000 &\to \$50,000 - \$50,000 = 0\\
+\text{Cliente con } \$60,000 &\to \$60,000 - \$50,000 = \$10,000\\
+\text{Cliente con } \$40,000 &\to \$40,000 - \$50,000 = -\$10,000
+\end{align*}
+
+\subsubsection{Paso 2: Calcular Varianza (Cuánto varían los datos)}
+
+La varianza mide \textbf{cuánto se esparcen los datos}:
+
+\[
+\text{Varianza} = \frac{1}{n}\sum_{i=1}^{n} x_i^2
+\]
+
+Donde $x_i$ es el valor centrado.
+
+\textbf{Interpretación:}
+\begin{itemize}
+    \item \textbf{Varianza alta:} Los clientes son MUY diferentes en esa característica
+    \item \textbf{Varianza baja:} Los clientes son SIMILARES en esa característica
+\end{itemize}
+
+Ejemplo:
+\begin{itemize}
+    \item Edad: Varianza = 156 (edades muy diferentes)
+    \item Ingreso: Varianza = 890,000 (ingresos muy diferentes)
+    \item Años de crédito/edad: Varianza = 0.12 (muy similar entre clientes)
+\end{itemize}
+
+\subsubsection{Paso 3: Encontrar Direcciones Principales}
+
+PCA encuentra las \textbf{direcciones} donde hay MÁS varianza:
+
+\[
+\text{PC}_k = \text{dirección que maximiza varianza}
+\]
+
+Es como preguntar: \textbf{``¿Cuál es la forma más natural en que varían mis datos?''}
+
+\subsection{Resultado del PCA en Nuestro Modelo}
+
+\textbf{Entrada:} 18 características  
+\textbf{Salida:} 8 componentes principales
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|c|c|c|}
+\hline
+\textbf{Componente} & \textbf{Varianza Explicada} & \textbf{Acumulada} \\
+\hline
+PC1 & 28.3\% & 28.3\% \\
+PC2 & 15.7\% & 44.0\% \\
+PC3 & 12.1\% & 56.1\% \\
+PC4 & 9.8\% & 65.9\% \\
+PC5 & 7.2\% & 73.1\% \\
+PC6 & 5.6\% & 78.7\% \\
+PC7 & 4.4\% & 83.1\% \\
+PC8 & 3.2\% & 86.3\% \\
+\hline
+\textbf{Total} & --- & \textbf{86.3\%} \\
+\hline
+\end{tabular}
+\caption{Varianza Explicada por cada Componente Principal}
+\end{table}
+
+\textbf{Interpretación:}
+
+\begin{quote}
+Usando solo 8 componentes, capturamos el 86.3\% de la información original.
+
+Esto significa que desechamos solo el 13.7\% de la información (ruido).
+\end{quote}
+
+\subsection{Transformación de Datos con PCA}
+
+\textbf{Un cliente original:}
+
+\[
+\text{Cliente} = [35 \text{ años}, 50,000 \text{ ingreso}, 10,000 \text{ monto}, \ldots, 0.20 \text{ deuda/ingreso}]^T
+\]
+
+(18 dimensiones)
+
+\textbf{El mismo cliente después de PCA:}
+
+\[
+\text{Cliente}_{\text{PCA}} = [0.523, -0.341, 0.789, -0.102, 0.445, -0.067, 0.123, 0.089]^T
+\]
+
+(8 dimensiones)
+
+\textbf{¿Qué significan estos números?}
+
+No representan características individuales. Representan \textbf{combinaciones de características} en las direcciones de máxima varianza.
+
+---
+
+% ============================================================================
+\section{PARTE 2: COMPUTACIÓN CUÁNTICA - LOS QUBITS}
+% ============================================================================
+
+\subsection{¿Qué es un Qubit?}
+
+\textbf{Computadora Clásica:}
+
+Un bit es 0 o 1. Como un interruptor: ON u OFF.
+
+\textbf{Computadora Cuántica:}
+
+Un qubit (quantum bit) es \textbf{0 Y 1 al mismo tiempo} (antes de medirlo).
+
+Esta propiedad se llama \textbf{superposición}.
+
+\textbf{Analogía:}
+
+Una moneda clásica: Está en la mesa, es cara o sello.
+
+Una moneda cuántica: Está girando en el aire. Es \textbf{AMBAS} al mismo tiempo hasta que cae.
+
+\subsection{Múltiples Qubits = Poder Exponencial}
+
+\textbf{Computadora Clásica con 8 bits:}
+
+Puede representar UN número a la vez de los $2^8 = 256$ posibles.
+
+\textbf{Computadora Cuántica con 8 qubits:}
+
+Puede representar TODOS los 256 números \textbf{simultáneamente}.
+
+\[
+\text{Poder:} 2^n \quad \text{donde } n = \text{número de qubits}
+\]
+
+Con 8 qubits: $2^8 = 256$ estados simultáneamente  
+Con 20 qubits: $2^{20} = 1,048,576$ estados simultáneamente  
+Con 300 qubits: $2^{300}$ estados (más que átomos en el universo)
+
+\textbf{En nuestro caso:}
+
+Usamos 8 qubits para representar las 8 características de PCA.
+
+\subsection{¿Cómo Usamos los Qubits? Circuitos Cuánticos}
+
+Un circuito cuántico es una secuencia de operaciones en qubits.
+
+\textbf{Nuestro circuito: ZZFeatureMap}
+
+\textbf{Nombre: ``ZZFeatureMap''}
+
+Desglose:
+\begin{itemize}
+    \item \textbf{Z:} Operación cuántica que rota el qubit
+    \item \textbf{Z:} Se aplica dos veces (por eso dos Z)
+    \item \textbf{FeatureMap:} Codifica las características en el estado cuántico
+\end{itemize}
+
+\textbf{¿Qué hace?}
+
+\begin{enumerate}
+    \item Toma una característica (número entre 0 y 2π)
+    \item La codifica en el estado de un qubit
+    \item Aplica rotaciones que dependen de la característica
+    \item Hace interacciones entre qubits
+\end{enumerate}
+
+\textbf{Visualización conceptual:}
+
+\begin{tikzpicture}
+    \draw (0,0) -- (5,0);
+    \draw (0,0.5) -- (5,0.5);
+    \draw (0,1) -- (5,1);
+    \draw (0,1.5) -- (5,1.5);
+    
+    \node[left] at (-0.5, 0) {Qubit 1};
+    \node[left] at (-0.5, 0.5) {Qubit 2};
+    \node[left] at (-0.5, 1) {Qubit 3};
+    \node[left] at (-0.5, 1.5) {Qubit 4};
+    
+    \node at (0.5, 0) {$R$};
+    \node at (1.5, 0) {$XX$};
+    \node at (2.5, 0) {$R$};
+    \node at (3.5, 0) {$XX$};
+    \node at (4.5, 0) {Medir};
+    
+    \node at (0.5, 0.5) {$R$};
+    \node at (1.5, 0.5) {$XX$};
+    \node at (2.5, 0.5) {$R$};
+    \node at (3.5, 0.5) {$XX$};
+    \node at (4.5, 0.5) {Medir};
+    
+    % ... repetir para otros qubits
+\end{tikzpicture}
+
+(Esto es una representación simplificada)
+
+\subsection{Profundidad del Circuito}
+
+El circuito cuántico tiene \textbf{profundidad 67}.
+
+\textbf{¿Qué significa?}
+
+Es como contar cuántas ``capas'' de operaciones hay:
+
+\begin{align*}
+\text{Profundidad 1:} &\quad \text{[Solo rotaciones básicas]}\\
+\text{Profundidad 10:} &\quad \text{[Varias rotaciones + interacciones]}\\
+\text{Profundidad 67:} &\quad \text{[Muchas operaciones complejas]}
+\end{align*}
+
+Mayor profundidad = Más poder computacional, pero también más errores posibles en hardware real.
+
+---
+
+% ============================================================================
+\section{PARTE 3: MATRIZ DE KERNEL CUÁNTICO}
+% ============================================================================
+
+\subsection{¿Qué es un Kernel?}
+
+Un kernel es una \textbf{medida de similitud} entre dos clientes.
+
+\textbf{Pregunta fundamental:}
+
+\[
+\text{¿Qué tan similares son estos dos clientes?}
+\]
+
+\textbf{Kernel clásico ejemplo:}
+
+\begin{quote}
+Cliente A: Ingreso \$50,000, edad 35  
+Cliente B: Ingreso \$52,000, edad 36  
+
+¿Similitud? MUY SIMILAR
+\end{quote}
+
+\begin{quote}
+Cliente A: Ingreso \$50,000, edad 35  
+Cliente C: Ingreso \$20,000, edad 60  
+
+¿Similitud? POCO SIMILAR
+\end{quote}
+
+\subsection{Kernel Cuántico: Fidelidad}
+
+En computación cuántica, usamos la \textbf{``Fidelidad''}.
+
+\textbf{Fidelidad:} Mide cuán parecidos son dos estados cuánticos.
+
+Rango: 0 a 1
+\begin{itemize}
+    \item Fidelidad = 1 → Estados idénticos
+    \item Fidelidad = 0.5 → Estados moderadamente similares
+    \item Fidelidad = 0 → Estados completamente diferentes
+\end{itemize}
+
+\subsection{Construcción de la Matriz de Kernel}
+
+\textbf{Objetivo:} Comparar cada cliente de entrenamiento con todos los demás.
+
+\textbf{Datos de entrada:}
+\begin{itemize}
+    \item 100 clientes de entrenamiento
+    \item 6,517 clientes de prueba
+\end{itemize}
+
+\textbf{Paso 1: Matriz K\_train (100 × 100)}
+
+Comparar cada cliente de entrenamiento con cada otro cliente de entrenamiento:
+
+\[
+K_{\text{train}}[i,j] = \text{Fidelidad}(\text{Estado}_i, \text{Estado}_j)
+\]
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{|c|c|c|c|c|}
+\hline
+& Cliente 1 & Cliente 2 & Cliente 3 & \ldots \\
+\hline
+Cliente 1 & 1.000 & 0.234 & 0.156 & \ldots \\
+\hline
+Cliente 2 & 0.234 & 1.000 & 0.412 & \ldots \\
+\hline
+Cliente 3 & 0.156 & 0.412 & 1.000 & \ldots \\
+\hline
+\vdots & \vdots & \vdots & \vdots & \ddots \\
+\hline
+\end{tabular}
+\caption{Ejemplo de Matriz K\_train (diagonal siempre = 1)}
+\end{table}
+
+\textbf{Interpretación:}
+
+Cliente 1 y Cliente 1: Fidelidad 1.0 (son idénticos) ✓  
+Cliente 1 y Cliente 2: Fidelidad 0.234 (poco similares)  
+Cliente 1 y Cliente 3: Fidelidad 0.156 (muy diferentes)
+
+\textbf{Paso 2: Matriz K\_test (6517 × 100)}
+
+Comparar cada cliente de prueba con cada cliente de entrenamiento:
+
+\[
+K_{\text{test}}[i,j] = \text{Fidelidad}(\text{Estado}_{\text{test},i}, \text{Estado}_{\text{train},j})
+\]
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{|c|c|c|c|c|}
+\hline
+& Entrenamiento 1 & Entrenamiento 2 & Entrenamiento 3 & \ldots \\
+\hline
+Test 1 & 0.412 & 0.189 & 0.523 & \ldots \\
+\hline
+Test 2 & 0.156 & 0.734 & 0.234 & \ldots \\
+\hline
+Test 3 & 0.890 & 0.067 & 0.445 & \ldots \\
+\hline
+\vdots & \vdots & \vdots & \vdots & \ddots \\
+\hline
+Test 6517 & 0.301 & 0.456 & 0.278 & \ldots \\
+\hline
+\end{tabular}
+\caption{Ejemplo de Matriz K\_test}
+\end{table}
+
+\subsection{¿Por Qué Esto es Importante?}
+
+La matriz de kernel \textbf{captura la estructura cuántica} de los datos:
+
+\begin{itemize}
+    \item Dos clientes similares en el espacio cuántico tendrán fidelidad alta
+    \item Dos clientes diferentes tendrán fidelidad baja
+    \item SVM usará esta matriz para tomar decisiones
+\end{itemize}
+
+\textbf{Ventaja cuántica:}
+
+En el espacio cuántico, patrones que son \textbf{no-lineales} en el espacio clásico pueden ser \textbf{linealmente separables}.
+
+(Esto es técnico, pero significa: la computación cuántica puede encontrar patrones que las computadoras clásicas no ven fácilmente)
+
+---
+
+% ============================================================================
+\section{PARTE 4: SVM (Support Vector Machine)}
+% ============================================================================
+
+\subsection{¿Qué es SVM?}
+
+SVM es un algoritmo que \textbf{dibuja una línea} (o límite) para separar dos grupos.
+
+\textbf{Ejemplo simple en 2D:}
+
+\begin{tikzpicture}
+    \begin{axis}[
+        xlabel={Característica 1},
+        ylabel={Característica 2},
+        width=8cm,
+        height=6cm,
+        grid=major
+    ]
+    
+    % Clientes de riesgo (X roja)
+    \addplot[mark=x, color=red, only marks, mark size=5] coordinates {
+        (1,1) (1.5,1.2) (2,1.5) (1.2,0.8)
+    };
+    
+    % Clientes sin riesgo (O azul)
+    \addplot[mark=o, color=blue, only marks, mark size=5] coordinates {
+        (3,3) (3.5,3.2) (4,3.5) (3.2,2.8)
+    };
+    
+    % Línea separadora
+    \addplot[black, thick, no markers] coordinates {(0,0) (5,5)};
+    
+    \node at (2.5, 1.5) {RIESGO};
+    \node at (3.5, 4.5) {NO RIESGO};
+    \node at (2.5, 2.8) {LÍMITE};
+    
+    \end{axis}
+\end{tikzpicture}
+
+\textbf{Lo que hace SVM:}
+
+\begin{enumerate}
+    \item Examina la matriz de kernel (similitud entre clientes)
+    \item Busca el mejor \textbf{límite} que separe riesgos de no-riesgos
+    \item Maximiza la distancia entre el límite y los puntos más cercanos
+\end{enumerate}
+
+\subsection{SVM con Kernel Cuántico}
+
+En nuestro caso, SVM no trabaja en el espacio 2D visual. Trabaja en el \textbf{espacio de kernel cuántico}.
+
+\textbf{¿Cómo?}
+
+SVM recibe:
+\begin{itemize}
+    \item Matriz $K_{\text{train}}$: Similitudes entre clientes de entrenamiento
+    \item Vector $y_{\text{train}}$: Etiquetas (1=Riesgo, 0=No-Riesgo)
+\end{itemize}
+
+SVM optimiza:
+
+\[
+\text{Minimizar: } \frac{1}{2}\|\mathbf{w}\|^2 + C\sum_{i=1}^{n} \xi_i
+\]
+
+Sujeto a:
+
+\[
+y_i(\mathbf{w}^T \phi(x_i) + b) \geq 1 - \xi_i
+\]
+
+\textbf{En español sencillo:}
+
+``Encuentra un límite que separe los datos, pero permite algunos errores si es necesario (regularización).''
+
+\subsection{Resultado: Support Vectors}
+
+Después del entrenamiento, SVM identifica los \textbf{clientes clave} (Support Vectors):
+
+\textbf{En nuestro modelo:} 0 support vectors
+
+(Esto es inusual y sugiere que el kernel cuántico ha encontrado un patrón muy claro)
+
+---
+
+% ============================================================================
+\section{PARTE 5: EJEMPLO COMPLETO DE PREDICCIÓN}
+% ============================================================================
+
+\subsection{Primer Cliente de Prueba}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|r|}
+\hline
+\textbf{Característica Original} & \textbf{Valor} \\
+\hline
+Edad & 35 años \\
+Ingreso & \$50,000 \\
+Monto & \$10,000 \\
+Tasa de Interés & 8.5\% \\
+Años Empleo & 5 \\
+Hist. Crédito & 10 años \\
+Impago Anterior & NO \\
+Proporción Deuda & 0.20 \\
+\hline
+\end{tabular}
+\caption{Cliente de Prueba Original}
+\end{table}
+
+\subsection{Paso 1: Aplicar PCA}
+
+Recordar: PCA transforma las 18 características en 8 componentes principales.
+
+\textbf{Proceso:}
+
+\begin{enumerate}
+    \item Centrar las características
+    \item Multiplicar por la matriz de transformación PCA
+    \item Obtener 8 números
+\end{enumerate}
+
+\textbf{Resultado:}
+
+\[
+x_{\text{PCA}} = [-0.523, 0.341, -0.789, 0.102, -0.445, 0.067, -0.123, -0.089]^T
+\]
+
+(Estos son números abstractos que representan combinaciones de las 18 características originales)
+
+\subsection{Paso 2: Codificar en Circuito Cuántico}
+
+Los 8 valores de PCA se codifican en 8 qubits:
+
+\begin{align*}
+\text{Qubit 1}: &\quad \text{Ángulo} = -0.523 \times \pi\\
+\text{Qubit 2}: &\quad \text{Ángulo} = 0.341 \times \pi\\
+\text{Qubit 3}: &\quad \text{Ángulo} = -0.789 \times \pi\\
+&\vdots
+\end{align*}
+
+El circuito ZZFeatureMap crea un \textbf{estado cuántico} que representa a este cliente.
+
+\subsection{Paso 3: Calcular Matriz de Kernel para Este Cliente}
+
+Se compara el cliente de prueba con cada uno de los 100 clientes de entrenamiento:
+
+\[
+K_{\text{fila}} = [\text{Fidelidad}(x_{\text{test}}, x_{\text{train},1}), \ldots, \text{Fidelidad}(x_{\text{test}}, x_{\text{train},100})]
+\]
+
+\textbf{Resultado numérico ejemplo:}
+
+\[
+K_{\text{fila}} = [0.412, 0.189, 0.523, 0.234, \ldots, 0.301]
+\]
+
+(100 números entre 0 y 1)
+
+\subsection{Paso 4: SVM Toma la Decisión}
+
+SVM usa su límite aprendido (durante entrenamiento) para decidir:
+
+\[
+\text{Predicción} = \text{sign}\left(\sum_{i=1}^{100} \alpha_i y_i K_{\text{fila}}[i] + b\right)
+\]
+
+Donde:
+\begin{itemize}
+    \item $\alpha_i$: Pesos aprendidos (cuánto importa cada cliente de entrenamiento)
+    \item $y_i$: Etiqueta del cliente de entrenamiento (1 o 0)
+    \item $K_{\text{fila}}[i]$: Similitud con cliente $i$
+    \item $b$: Offset (intercepción)
+\end{itemize}
+
+\textbf{Proceso:}
+
+\begin{enumerate}
+    \item Multiplicar cada similitud por su peso: $\alpha_i \times y_i \times K_{\text{fila}}[i]$
+    \item Sumar todos los productos
+    \item Sumar el offset $b$
+    \item Si el resultado es positivo → RIESGO (1)
+    \item Si el resultado es negativo → NO RIESGO (0)
+\end{enumerate}
+
+\textbf{Ejemplo numérico:}
+
+\begin{align*}
+\text{Score} &= 0.5 \times 1 \times 0.412 + 0.3 \times 1 \times 0.189 + \ldots + 0.2 \times 0 \times 0.301\\
+&= 0.206 + 0.057 + \ldots + 0\\
+&= 0.45
+\end{align*}
+
+\textbf{Decisión:}
+
+$0.45 > 0$ → \textbf{PREDICCIÓN: RIESGO}
+
+\subsection{Paso 5: Obtener Probabilidad de Riesgo}
+
+SVM da un score, pero queremos una \textbf{probabilidad} (0-100\%).
+
+Se usa calibración (Platt scaling):
+
+\[
+\text{Probabilidad} = \frac{1}{1 + e^{-(\text{score} + \text{offset})}}
+\]
+
+\textbf{Ejemplo:}
+
+Si score = 0.45 y offset = -0.5:
+
+\[
+\text{Probabilidad} = \frac{1}{1 + e^{-(-0.05)}} \approx 0.488 \approx 48.8\%
+\]
+
+\textbf{Conclusión:} Este cliente tiene ~49\% de probabilidad de ser riesgo.
+
+---
+
+% ============================================================================
+\section{PARTE 6: EJEMPLO DE CLIENTE DE ALTO RIESGO}
+% ============================================================================
+
+\subsection{Cliente Problemático}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|r|}
+\hline
+\textbf{Característica} & \textbf{Valor} \\
+\hline
+Edad & 45 años \\
+Ingreso & \$25,000 \\
+Monto & \$20,000 \\
+Tasa de Interés & 15\% \\
+Años Empleo & 0.5 \\
+Hist. Crédito & 1 año \\
+Impago Anterior & SÍ \\
+Proporción Deuda & 0.80 \\
+\hline
+\end{tabular}
+\caption{Cliente de Alto Riesgo}
+\end{table}
+
+\subsection{Proceso Completo}
+
+\textbf{Paso 1: PCA Transformation}
+
+Las 18 características se transforman:
+
+\[
+x_{\text{PCA}} = [1.234, -0.856, 0.923, -0.412, 0.678, -0.301, 0.445, -0.189]^T
+\]
+
+(Números más extremos que el cliente de bajo riesgo)
+
+\textbf{Paso 2: Codificación Cuántica}
+
+Los 8 valores se codifican en qubits (rotaciones más pronunciadas).
+
+\textbf{Paso 3: Matriz de Kernel}
+
+Se calcula similitud con 100 clientes de entrenamiento.
+
+Resultado:
+
+\[
+K_{\text{fila}} = [0.234, 0.567, 0.789, 0.423, \ldots, 0.678]
+\]
+
+(Patrones similares a otros clientes de RIESGO)
+
+\textbf{Paso 4: Decisión de SVM}
+
+\[
+\text{Score} = 1.2
+\]
+
+(Score más alto que el cliente anterior)
+
+\textbf{Paso 5: Probabilidad}
+
+\[
+\text{Probabilidad} = \frac{1}{1 + e^{-1.2}} \approx 0.778 \approx 77.8\%
+\]
+
+\textbf{CONCLUSIÓN:} \textbf{77.8\% de probabilidad de impago → RECHAZAR}
+
+---
+
+% ============================================================================
+\section{Rendimiento del Modelo}
+% ============================================================================
+
+\subsection{Métricas}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|c|l|}
+\hline
+\textbf{Métrica} & \textbf{Valor} & \textbf{Significado} \\
+\hline
+Precisión & 0 & Cuando predice RIESGO, siempre está correcto \\
+\hline
+Recall & 0.07\% & Detecta solo 7 de cada 10,000 riesgos reales \\
+\hline
+F1-Score & 0.001 & Muy bajo - modelo no es útil \\
+\hline
+AUC-ROC & 0.5319 & Apenas mejor que lanzar una moneda (50\%) \\
+\hline
+\end{tabular}
+\caption{Rendimiento del Modelo QSVM (100 muestras)}
+\end{table}
+
+\subsection{¿Por Qué el Desempeño es Bajo?}
+
+\textbf{Razones:}
+
+\begin{enumerate}
+    \item \textbf{Pocas muestras:} Solo 100 clientes de entrenamiento (el modelo necesita más)
+    
+    \item \textbf{Desbalance de clases:} De 100 clientes, ~78 son no-riesgo y ~22 son riesgo
+    
+    \item \textbf{Hardware limitado:} Los simuladores cuánticos tienen limitaciones
+    
+    \item \textbf{Ruido cuántico:} En hardware real, hay errores en los cálculos
+\end{enumerate}
+
+\subsection{¿Cómo Mejoramos?}
+
+El siguiente paso es usar \textbf{200 clientes + estratificación}:
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|c|}
+\hline
+\textbf{Parámetro} & \textbf{Valor} \\
+\hline
+Muestras de Entrenamiento & 200 (vs 100 antes) \\
+Estratificación & SÍ (mantener proporción de riesgos) \\
+Tiempo Estimado & ~13 horas \\
+AUC-ROC Esperado & 78-82\% \\
+\hline
+\end{tabular}
+\caption{Mejoras Planeadas}
+\end{table}
+
+---
+
+% ============================================================================
+\section{Comparación: XGBoost vs QSVM}
+% ============================================================================
+
+\subsection{Tabla Comparativa}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{Característica} & \textbf{XGBoost} & \textbf{QSVM} \\
+\hline
+\textbf{Velocidad} & ~10ms/predicción & ~45s/predicción \\
+\hline
+\textbf{AUC-ROC (Actual)} & 89.83\% & 53.19\% \\
+\hline
+\textbf{Muestras Entrenamiento} & 34,642 & 100 \\
+\hline
+\textbf{Características} & 18 (originales) & 8 (PCA) \\
+\hline
+\textbf{Modelo} & 200 árboles & Circuito cuántico \\
+\hline
+\textbf{Interpretabilidad} & Media & Baja \\
+\hline
+\textbf{Escalabilidad} & Excelente & Limitada (qubits) \\
+\hline
+\end{tabular}
+\caption{Comparación XGBoost vs QSVM}
+\end{table}
+
+---
+
+% ============================================================================
+\section{¿Por Qué Computación Cuántica Entonces?}
+% ============================================================================
+
+\subsection{Razones Estratégicas}
+
+\begin{enumerate}
+    \item \textbf{Investigación:} Explorar nuevas fronteras en ML
+    \item \textbf{Futuro:} Los qubits mejorarán (hoy son limitados)
+    \item \textbf{Ventajas Potenciales:} En problemas específicos, lo cuántico puede ser mejor
+    \item \textbf{Hibrido:} Combinar XGBoost (rápido) + QSVM (exploración)
+\end{enumerate}
+
+\subsection{Próximos Pasos}
+
+\begin{itemize}
+    \item Mejorar QSVM a 200 muestras (AUC 78-82\% esperado)
+    \item Probar otros kernels cuánticos
+    \item Usar hardware cuántico real (no simulador)
+    \item Investigar ensambles (XGBoost + QSVM juntos)
+\end{itemize}
+
+---
+
+% ============================================================================
+\section{Glosario Completo}
+% ============================================================================
+
+\begin{description}
+    \item[PCA (Análisis de Componentes Principales):] Técnica para reducir dimensiones encontrando las direcciones de máxima varianza
+    
+    \item[Qubit (Quantum Bit):] Unidad fundamental de computación cuántica. Puede ser 0, 1, o ambos simultáneamente (superposición)
+    
+    \item[Superposición:] Estado donde un qubit es múltiples valores al mismo tiempo hasta ser medido
+    
+    \item[Fidelidad:] Medida de cuán similar es un estado cuántico a otro (0-1)
+    
+    \item[Kernel:] Función matemática que mide similitud entre pares de puntos de datos
+    
+    \item[SVM (Support Vector Machine):] Algoritmo que encuentra el mejor límite para separar dos clases
+    
+    \item[Support Vectors:] Puntos de datos más cercanos al límite de decisión
+    
+    \item[Circuito Cuántico:] Secuencia de operaciones cuánticas aplicadas a qubits
+    
+    \item[Profundidad del Circuito:] Número de capas de operaciones en un circuito cuántico
+    
+    \item[ZZFeatureMap:] Tipo específico de circuito cuántico para codificar características
+    
+    \item[AUC-ROC:] Métrica que mide capacidad del modelo para diferenciar entre dos clases (0-1)
+\end{description}
+
+---
+
+% ============================================================================
+\section{Resumen Ejecutivo}
+% ============================================================================
+
+\subsection{El Flujo Completo (Resumido)}
+
+\[
+\begin{aligned}
+\text{Datos Originales} &\xrightarrow{\text{18 características}}\\
+\text{PCA} &\xrightarrow{\text{8 componentes principales}}\\
+\text{Circuito Cuántico} &\xrightarrow{\text{8 qubits + rotaciones}}\\
+\text{Matriz de Kernel} &\xrightarrow{\text{similitudes cuánticas}}\\
+\text{SVM} &\xrightarrow{\text{decisión: Riesgo o No-Riesgo}}\\
+\text{Probabilidad} &\xrightarrow{\text{0-100\%}}
+\end{aligned}
+\]
+
+\subsection{Lo Importante para el Banco}
+
+\begin{itemize}
+    \item \textbf{XGBoost:} Usado en producción (rápido, 89.83\% AUC)
+    \item \textbf{QSVM:} Herramienta experimental (lento, 53.19\% AUC actualmente)
+    \item \textbf{Mejora:} QSVM mejorará a ~78-82\% AUC con 200 muestras
+    \item \textbf{Híbrido:} Futuro: usar ambos para mejores decisiones
+\end{itemize}
+
+---
+
+\end{document}

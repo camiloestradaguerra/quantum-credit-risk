@@ -1,0 +1,489 @@
+\documentclass[11pt,a4paper,spanish]{article}
+\usepackage[utf-8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{tikz}
+\usepackage{fancyhdr}
+\usepackage{float}
+
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{\textit{XGBoost para Riesgo Crediticio}}
+\lhead{\textit{Análisis Explicativo}}
+\cfoot{\thepage}
+
+\lstset{
+    language=Python,
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    postbreak=\mbox{\textcolor{red}{$\hookrightarrow$}\space},
+    backgroundcolor=\color{gray!10},
+    keywordstyle=\color{blue},
+    commentstyle=\color{gray},
+    stringstyle=\color{red},
+    showstringspaces=false
+}
+
+\title{\textbf{XGBoost para Análisis de Riesgo Crediticio} \\ {\large Guía Explicativa Paso a Paso}}
+\author{Material Educativo - Departamento de Riesgo}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Este documento explica de manera clara y accesible cómo funciona el algoritmo XGBoost (Extreme Gradient Boosting) en el contexto del análisis de riesgo crediticio. Se incluyen ejemplos prácticos con datos reales, explicaciones teóricas simplificadas y flujos de datos completos para que cualquier persona pueda entender cómo el modelo toma decisiones sobre quién es un riesgo de impago.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+% ============================================================================
+\section{Introducción: ¿Qué es XGBoost?}
+% ============================================================================
+
+XGBoost es un algoritmo de \textbf{aprendizaje automático} diseñado para hacer predicciones precisas. En nuestro caso, lo usamos para predecir quién es \textbf{riesgo de no pagar} un crédito.
+
+\subsection{La Idea Principal}
+
+Imagine que usted es un experto en análisis de crédito con 30 años de experiencia. Ahora imagine que su colega le pregunta:
+
+\begin{center}
+\textit{``¿Esta persona pagará su crédito o no?''}
+\end{center}
+
+Usted miraría varios factores:
+\begin{itemize}
+    \item \textbf{Edad:} ¿Es joven o adulto? (experiencia de vida)
+    \item \textbf{Ingreso:} ¿Tiene estabilidad financiera?
+    \item \textbf{Monto del préstamo:} ¿Es proporcional a su ingreso?
+    \item \textbf{Tasa de interés:} ¿Puede pagar los intereses?
+    \item \textbf{Historial de crédito:} ¿Ha pagado antes?
+    \item \textbf{Historial de impagos:} ¿Ha fallado en pagos anteriores?
+\end{itemize}
+
+XGBoost hace exactamente esto: \textbf{combina múltiples factores para tomar una decisión}.
+
+---
+
+% ============================================================================
+\section{Conceptos Fundamentales}
+% ============================================================================
+
+\subsection{Árbol de Decisión: El Bloque Básico}
+
+XGBoost está construido sobre \textbf{árboles de decisión}. Un árbol es simple: es una serie de preguntas que conducen a una respuesta.
+
+\textbf{Ejemplo visual de un árbol simple:}
+
+\begin{tikzpicture}[node distance=2cm]
+    \node(A) [draw, rectangle] {¿Ingreso > \$40,000?};
+    \node(B) [draw, rectangle, below left of=A, xshift=-2.5cm] {¿Edad > 30?};
+    \node(C) [draw, rectangle, below right of=A, xshift=2.5cm] {RIESGO BAJO};
+    \node(D) [draw, rectangle, below left of=B, xshift=-2cm] {RIESGO BAJO};
+    \node(E) [draw, rectangle, below right of=B, xshift=2cm] {RIESGO ALTO};
+    
+    \draw[->] (A) -- (B) node[midway, left] {Sí};
+    \draw[->] (A) -- (C) node[midway, right] {No};
+    \draw[->] (B) -- (D) node[midway, left] {Sí};
+    \draw[->] (B) -- (E) node[midway, right] {No};
+\end{tikzpicture}
+
+\subsection{El Truco de XGBoost: Muchos Árboles Débiles}
+
+En lugar de crear UN árbol muy complejo (que podría cometer errores), XGBoost crea \textbf{200 árboles pequeños} que \textbf{votan juntos}.
+
+\begin{center}
+\textbf{Analogía:}
+\end{center}
+
+¿A quién le cree más?
+\begin{itemize}
+    \item ¿A UN experto que está 70\% seguro?
+    \item ¿O a 10 expertos que CADA UNO está 60\% seguro?
+\end{itemize}
+
+\textbf{Respuesta:} A los 10 expertos. XGBoost usa esta idea: \textbf{200 pequeños árboles votan y deciden juntos}.
+
+---
+
+% ============================================================================
+\section{Flujo de Datos: Ejemplo Paso a Paso}
+% ============================================================================
+
+\subsection{Datos de Entrada}
+
+Tomemos 5 clientes reales de nuestro dataset:
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|c|c|c|c|c|c|c|c|}
+\hline
+\textbf{ID} & \textbf{Edad} & \textbf{Ingreso} & \textbf{Monto} & \textbf{Tasa} & \textbf{Emp. Años} & \textbf{Hist. Crédito} & \textbf{Impago Anterior} \\
+\hline
+1 & 35 & 50,000 & 10,000 & 8.5\% & 5 & 10 & NO \\
+\hline
+2 & 28 & 35,000 & 15,000 & 12.5\% & 1 & 3 & SÍ \\
+\hline
+3 & 45 & 25,000 & 20,000 & 15\% & 0.5 & 1 & SÍ \\
+\hline
+4 & 55 & 80,000 & 8,000 & 6\% & 20 & 25 & NO \\
+\hline
+5 & 32 & 42,000 & 12,000 & 9\% & 3 & 7 & NO \\
+\hline
+\end{tabular}
+\caption{Ejemplo de clientes para análisis}
+\end{table}
+
+\textbf{Objetivo:} Para cada cliente, predecir si será \textbf{Riesgo (1)} o \textbf{No Riesgo (0)}.
+
+\subsection{Paso 1: Normalización (Poner todo en la misma escala)}
+
+Los datos vienen en diferentes escalas:
+\begin{itemize}
+    \item Edad: 20-70 años
+    \item Ingreso: \$10,000 - \$200,000
+    \item Tasa de interés: 3\% - 20\%
+\end{itemize}
+
+XGBoost necesita que TODO esté en la misma escala. Usamos \textbf{StandardScaler}:
+
+\[
+x_{\text{normalizado}} = \frac{x - \mu}{\sigma}
+\]
+
+Donde:
+\begin{itemize}
+    \item $x$ = valor original
+    \item $\mu$ = promedio de todos los valores
+    \item $\sigma$ = desviación estándar
+\end{itemize}
+
+\textbf{Ejemplo con Edad del Cliente 1:}
+
+Supongamos que todas las edades tienen promedio $\mu = 40$ y desviación $\sigma = 10$:
+
+\[
+\text{Edad normalizada} = \frac{35 - 40}{10} = \frac{-5}{10} = -0.5
+\]
+
+Después de normalizar, \textbf{todos los datos están entre -3 y 3 aproximadamente}.
+
+\subsection{Paso 2: Ingeniería de Características (Crear nuevas columnas inteligentes)}
+
+XGBoost trabaja mejor si le damos \textbf{características inteligentes}. No solo los datos crudos, sino combinaciones que tengan sentido:
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Nombre} & \textbf{Fórmula} & \textbf{Interpretación} \\
+\hline
+Deuda/Ingreso & $\frac{\text{Monto}}{\text{Ingreso}}$ & ¿Cuánto pide vs. cuánto gana? \\
+\hline
+Riesgo Interés & Tasa$^2$ & Penaliza tasas altas más \\
+\hline
+Interacción Préstamo-Ingreso & $\frac{\text{Monto}}{\text{Ingreso} + 1}$ & Proporción normalizada \\
+\hline
+Estabilidad Empleo & $\log(\text{Años} + 1)$ & Experiencia laboral \\
+\hline
+Proporción Historial & $\frac{\text{Hist. Crédito}}{\text{Edad} + 1}$ & Historial relativo a edad \\
+\hline
+\end{tabular}
+\caption{Nuevas características creadas para mejorar predicción}
+\end{table}
+
+\textbf{Ejemplo: Cliente 1}
+
+\begin{align*}
+\text{Deuda/Ingreso} &= \frac{10,000}{50,000} = 0.20 \quad (\text{20\% de su ingreso})\\
+\text{Riesgo Interés} &= 8.5^2 = 72.25\\
+\text{Est. Empleo} &= \log(5 + 1) = \log(6) \approx 1.79
+\end{align*}
+
+\subsection{Paso 3: Entrenamiento (Ajustar los Árboles)}
+
+XGBoost crea 200 árboles pequeños. Cada árbol aprende a partir de los \textbf{errores del árbol anterior}.
+
+\textbf{Concepto clave: Boosting (Impulsión)}
+
+Imagine que está enseñando a un estudiante:
+
+\begin{enumerate}
+    \item Primer árbol: Intenta predecir. Comete errores.
+    \item Segundo árbol: Se enfoca en los clientes que el primero predijo mal.
+    \item Tercer árbol: Se enfoca en los errores restantes.
+    \item ... (esto se repite 200 veces)
+\end{enumerate}
+
+Cada árbol nuevo \textbf{``corrige''} a los anteriores.
+
+\subsection{Paso 4: Predicción para el Cliente 1}
+
+Una vez entrenado, el modelo hace predicciones:
+
+\begin{enumerate}
+    \item \textbf{Árbol 1} vota: ``Este cliente tiene 60\% probabilidad de NO impago''
+    \item \textbf{Árbol 2} vota: ``Basándome en su estabilidad laboral, 40\% probabilidad de NO impago''
+    \item \textbf{Árbol 3} vota: ``Basándome en su historial, 35\% probabilidad''
+    \item ... (200 votos totales)
+\end{enumerate}
+
+\textbf{Predicción Final (Promedio de todos los votos):}
+
+\[
+\text{Probabilidad de Impago} = \frac{60\% + 40\% + 35\% + \ldots}{200} \approx 15\%
+\]
+
+\textbf{Decisión:}
+\begin{itemize}
+    \item Si probabilidad $> 11.6\%$ (umbral óptimo) → \textbf{RIESGO}
+    \item Si probabilidad $\leq 11.6\%$ → \textbf{NO RIESGO}
+\end{itemize}
+
+Para el Cliente 1: $15\% > 11.6\%$ → \textbf{Predicción: RIESGO}
+
+---
+
+% ============================================================================
+\section{Ejemplo Numérico Completo}
+% ============================================================================
+
+\subsection{Cliente 3: El Caso de Alto Riesgo}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|r|}
+\hline
+\textbf{Característica} & \textbf{Valor} \\
+\hline
+Edad & 45 años \\
+Ingreso & \$25,000 \\
+Monto del Préstamo & \$20,000 \\
+Tasa de Interés & 15\% \\
+Años de Empleo & 0.5 \\
+Años de Historial & 1 \\
+Impago Anterior & SÍ \\
+\hline
+\end{tabular}
+\caption{Datos del Cliente 3}
+\end{table}
+
+\subsubsection{Cálculos de Características}
+
+\begin{align*}
+\text{Deuda/Ingreso} &= \frac{20,000}{25,000} = 0.80 \quad (\text{80\% de su ingreso - RIESGO ALTO!})\\
+\text{Riesgo Interés} &= 15^2 = 225 \quad (\text{Tasa muy alta})\\
+\text{Est. Empleo} &= \log(0.5 + 1) = \log(1.5) \approx 0.41 \quad (\text{Muy nuevo en el trabajo})\\
+\text{Proporción Historial} &= \frac{1}{45 + 1} = 0.022 \quad (\text{Muy poco historial})
+\end{align*}
+
+\subsubsection{Votación de los Árboles}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|c|c|l|}
+\hline
+\textbf{Árbol} & \textbf{Voto} & \textbf{Razón} \\
+\hline
+1 & 85\% & Deuda/Ingreso muy alta (0.80) \\
+2 & 78\% & Tasa de interés muy alta (15\%) \\
+3 & 72\% & Poco tiempo en el empleo (0.5 años) \\
+4 & 88\% & Impago anterior + historial corto \\
+5 & 81\% & Edad 45 con muy poco historial \\
+\vdots & \vdots & \vdots \\
+200 & 76\% & Múltiples factores de riesgo \\
+\hline
+\end{tabular}
+\caption{Ejemplos de votos de algunos árboles}
+\end{table}
+
+\subsubsection{Predicción Final}
+
+\[
+\text{Probabilidad Promedio} = \frac{85\% + 78\% + 72\% + 88\% + 81\% + \ldots + 76\%}{200} \approx 80\%
+\]
+
+\textbf{Comparación con umbral:}
+\[
+80\% > 11.6\% \Rightarrow \textbf{PREDICCIÓN: RIESGO ALTO}
+\]
+
+\textbf{Explicación para el banco:}
+\begin{quote}
+Este cliente presenta múltiples señales de alerta:
+\begin{itemize}
+    \item Pide un monto (20k) equivalente al 80\% de su ingreso anual
+    \item Tasa de interés muy alta (15\%), lo que sugiere que es cliente de alto riesgo
+    \item Acaba de empezar el trabajo (0.5 años) - inestable
+    \item Tiene historial de impagos
+    \item \textbf{Recomendación: RECHAZAR crédito o cobrar tasa más alta}
+\end{itemize}
+\end{quote}
+
+---
+
+% ============================================================================
+\section{Métricas de Desempeño}
+% ============================================================================
+
+\subsection{¿Qué Tan Bueno es Nuestro Modelo XGBoost?}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|c|l|}
+\hline
+\textbf{Métrica} & \textbf{Valor} & \textbf{Significado} \\
+\hline
+Precisión & 82.4\% & De 100 que predice que IMPAGARÁ, 82 realmente impagan \\
+\hline
+Recall & 65.2\% & De todos los que realmente IMPAGAN, detectamos 65 de cada 100 \\
+\hline
+F1-Score & 0.73 & Balance entre Precisión y Recall (escala 0-1) \\
+\hline
+AUC-ROC & 0.8983 & Probabilidad de que el modelo diferencie riesgos vs no-riesgos: 89.83\% \\
+\hline
+\end{tabular}
+\caption{Desempeño del Modelo XGBoost en conjunto de prueba}
+\end{table}
+
+\textbf{Interpretación:}
+\begin{itemize}
+    \item El modelo es \textbf{bastante confiable}
+    \item De cada 100 clientes de riesgo real, detecta ~65
+    \item La tasa de falsos positivos es aceptable para el banco
+\end{itemize}
+
+---
+
+% ============================================================================
+\section{Umbral Óptimo: El Punto de Corte}
+% ============================================================================
+
+\subsection{¿Por Qué 11.6\%?}
+
+XGBoost da una probabilidad (0-100\%). Pero ¿cuándo decimos ``RIESGO''? ¿En 50\%? ¿En 20\%?
+
+\textbf{Análisis de Costo-Beneficio:}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|r|r|}
+\hline
+\textbf{Escenario} & \textbf{Costo} & \textbf{Valor Recuperado} \\
+\hline
+Rechazo Correcto (evitar impago) & \$0 & \$30,000 \\
+Aceptación Correcta (cliente paga) & \$0 & \$5,000 \\
+Rechazo Incorrecto (rechazamos buen cliente) & \$800 & \$0 \\
+Aceptación Incorrecta (cliente impaga) & \$30,000 & \$0 \\
+\hline
+\end{tabular}
+\caption{Matriz de Costo del Banco}
+\end{table}
+
+Con estos costos, el banco determinó que el \textbf{umbral óptimo es 11.6\%}:
+
+\begin{itemize}
+    \item Si probabilidad $\geq 11.6\%$ → Rechazar (costo de rechazo incorrecto: \$800)
+    \item Si probabilidad $< 11.6\%$ → Aceptar (riesgo de impago: \$30,000)
+\end{itemize}
+
+---
+
+% ============================================================================
+\section{Ventajas del Modelo XGBoost}
+% ============================================================================
+
+\subsection{¿Por Qué Usamos XGBoost en Lugar de Otros Métodos?}
+
+\begin{enumerate}
+    \item \textbf{Precisión:} 89.83\% AUC-ROC (muy preciso)
+    
+    \item \textbf{Maneja Datos Complejos:} Puede capturar relaciones no-lineales entre variables
+    
+    \item \textbf{Rápido:} Predicciones en milisegundos
+    
+    \item \textbf{Robusto:} Funciona bien incluso con datos imperfectos
+    
+    \item \textbf{Escalable:} Puede procesar millones de clientes
+    
+    \item \textbf{Interpretable:} Podemos explicar por qué rechaza o acepta
+\end{enumerate}
+
+---
+
+% ============================================================================
+\section{Resumen del Flujo Completo}
+% ============================================================================
+
+\begin{tikzpicture}[
+    node distance=2cm,
+    block/.style={rectangle, draw, minimum width=3cm, minimum height=1cm, text centered},
+    arrow/.style={->, >=stealth, thick}
+]
+
+\node(start) [block] {Datos del Cliente};
+\node(norm) [block, below of=start] {Normalizar};
+\node(feat) [block, below of=norm] {Ingeniería de Características};
+\node(model) [block, below of=feat] {Pasar por 200 Árboles};
+\node(vote) [block, below of=model] {Promediar Votos};
+\node(threshold) [block, below of=vote] {Comparar con Umbral (11.6\%)};
+\node(predict) [block, below of=threshold] {Predicción: Riesgo o No-Riesgo};
+
+\draw[arrow] (start) -- (norm);
+\draw[arrow] (norm) -- (feat);
+\draw[arrow] (feat) -- (model);
+\draw[arrow] (model) -- (vote);
+\draw[arrow] (vote) -- (threshold);
+\draw[arrow] (threshold) -- (predict);
+
+\end{tikzpicture}
+
+---
+
+% ============================================================================
+\section{Conclusión}
+% ============================================================================
+
+XGBoost es un método poderoso que:
+
+\begin{enumerate}
+    \item Toma \textbf{múltiples factores} de un cliente
+    \item Los \textbf{transforma inteligentemente} en características
+    \item Los \textbf{pasa por 200 árboles} que votan
+    \item \textbf{Combina los votos} para una predicción
+    \item \textbf{Compara con un umbral óptimo} para tomar la decisión final
+\end{enumerate}
+
+\textbf{Resultado final:} Un sistema \textbf{confiable al 89.83\%} para identificar clientes de riesgo, permitiendo al banco:
+\begin{itemize}
+    \item Reducir pérdidas por impagos
+    \item Maximizar utilidades en colocaciones seguras
+    \item Tomar decisiones rápidas y consistentes
+\end{itemize}
+
+---
+
+\appendix
+
+\section{Glosario de Términos}
+
+\begin{description}
+    \item[Árbol de Decisión:] Modelo que hace predicciones preguntando preguntas sucesivas
+    \item[Boosting:] Técnica donde múltiples modelos débiles se combinan para crear uno fuerte
+    \item[AUC-ROC:] Métrica que mide qué tan bien el modelo diferencia entre riesgos y no-riesgos
+    \item[Normalización:] Poner todos los datos en la misma escala
+    \item[Ingeniería de Características:] Crear nuevas variables que tengan sentido para el problema
+    \item[Umbral:] Punto de corte para tomar una decisión
+\end{description}
+
+\end{document}
