@@ -1,0 +1,183 @@
+{
+  "method_1_cv": {
+    "method": "Cross-Validated Threshold Optimization",
+    "optimal_threshold": 0.11599999999999999,
+    "threshold_std": 0.013564659966250529,
+    "financial_value": 13354560.0,
+    "financial_value_std": 169158.12247716633,
+    "fold_thresholds": [
+      0.12,
+      0.11,
+      0.1,
+      0.11,
+      0.13999999999999999
+    ],
+    "fold_values": [
+      13547400.0,
+      13246100.0,
+      13435100.0,
+      13079700.0,
+      13464500.0
+    ],
+    "fold_metrics": [
+      {
+        "accuracy": 0.7576850916438158,
+        "precision": 0.6305024455313473,
+        "recall": 0.9940413599719593,
+        "f1": 0.771595701265134,
+        "financial_value": 13547400,
+        "tp": 2836,
+        "fp": 1662,
+        "fn": 17,
+        "tn": 2414
+      },
+      {
+        "accuracy": 0.7354596622889306,
+        "precision": 0.6097718467498924,
+        "recall": 0.9929898352611286,
+        "f1": 0.755567408987865,
+        "financial_value": 13246100,
+        "tp": 2833,
+        "fp": 1813,
+        "fn": 20,
+        "tn": 2263
+      },
+      {
+        "accuracy": 0.7195438799076213,
+        "precision": 0.5951832460732984,
+        "recall": 0.9964936886395512,
+        "f1": 0.7452471482889734,
+        "financial_value": 13435100,
+        "tp": 2842,
+        "fp": 1933,
+        "fn": 10,
+        "tn": 2143
+      },
+      {
+        "accuracy": 0.7357101616628176,
+        "precision": 0.6102719033232629,
+        "recall": 0.9912372940764108,
+        "f1": 0.7554427674636036,
+        "financial_value": 13079700,
+        "tp": 2828,
+        "fp": 1806,
+        "fn": 25,
+        "tn": 2269
+      },
+      {
+        "accuracy": 0.7784353348729792,
+        "precision": 0.6519133241124943,
+        "recall": 0.9912372940764108,
+        "f1": 0.786538728966764,
+        "financial_value": 13464500,
+        "tp": 2828,
+        "fp": 1510,
+        "fn": 25,
+        "tn": 2565
+      }
+    ]
+  },
+  "method_2_bayesian": {
+    "method": "Bayesian Optimization (Differential Evolution)",
+    "optimal_threshold": 0.06323282570118277,
+    "financial_value": 4193000.0,
+    "iterations": 7,
+    "success": true,
+    "metrics": {
+      "accuracy": 0.4862666871259782,
+      "precision": 0.29528061224489793,
+      "recall": 0.9767932489451476,
+      "f1": 0.4534769833496572,
+      "financial_value": 4193000,
+      "tp": 1389,
+      "fp": 3315,
+      "fn": 33,
+      "tn": 1780
+    }
+  },
+  "method_3_optuna": {
+    "method": "Optuna Framework (TPE Sampler)",
+    "optimal_threshold": 0.06195598983016004,
+    "financial_value": 4159200.0,
+    "best_trial_number": 39,
+    "total_trials": 100,
+    "pruned_trials": 0,
+    "metrics": {
+      "accuracy": 0.4822771213748657,
+      "precision": 0.29365750528541223,
+      "recall": 0.9767932489451476,
+      "f1": 0.45156046814044215,
+      "financial_value": 4159200,
+      "tp": 1389,
+      "fp": 3341,
+      "fn": 33,
+      "tn": 1754
+    },
+    "trial_history": [
+      {
+        "trial": 0,
+        "threshold": 0.37704931647041523,
+        "value": -3509900.0,
+        "state": "TrialState.COMPLETE"
+      },
+      {
+        "trial": 1,
+        "threshold": 0.9417000202817178,
+        "value": -32739200.0,
+        "state": "TrialState.COMPLETE"
+      },
+      {
+        "trial": 2,
+        "threshold": 0.727354062975177,
+        "value": -13887800.0,
+        "state": "TrialState.COMPLETE"
+      },
+      {
+        "trial": 3,
+        "threshold": 0.5966853145130959,
+        "value": -8992100.0,
+        "state": "TrialState.COMPLETE"
+      },
+      {
+        "trial": 4,
+        "threshold": 0.1628982676335878,
+        "value": 2639700.0,
+        "state": "TrialState.COMPLETE"
+      },
+      {
+        "trial": 5,
+        "threshold": 0.1628746299294786,
+        "value": 2674700.0,
+        "state": "TrialState.COMPLETE"
+      },
+      {
+        "trial": 6,
+        "threshold": 0.06692193992483547,
+        "value": 4066300.0,
+        "state": "TrialState.COMPLETE"
+      },
+      {
+        "trial": 7,
+        "threshold": 0.8588526228594364,
+        "value": -24297900.0,
+        "state": "TrialState.COMPLETE"
+      },
+      {
+        "trial": 8,
+        "threshold": 0.5990927115083446,
+        "value": -9024500.0,
+        "state": "TrialState.COMPLETE"
+      },
+      {
+        "trial": 9,
+        "threshold": 0.7039111262401245,
+        "value": -13007700.0,
+        "state": "TrialState.COMPLETE"
+      }
+    ]
+  },
+  "timestamp": "2026-05-19T19:00:21.134635",
+  "winner": "CV Threshold Opt",
+  "recommended_threshold": 0.11599999999999999,
+  "expected_financial_value": 13354560.0
+}

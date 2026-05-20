@@ -1,0 +1,94 @@
+{
+  "timestamp": "2026-05-19T14:46:40.002113",
+  "classical_metrics": {
+    "train": {
+      "accuracy": 0.9272559321055366,
+      "precision": 0.9228719573671323,
+      "recall": 0.898415591699383,
+      "f1": 0.9104795737122557,
+      "auc_roc": 0.9791844008723076
+    },
+    "test": {
+      "accuracy": 0.8712597821083321,
+      "precision": 0.7167286245353159,
+      "recall": 0.6779184247538678,
+      "f1": 0.6967835200578244,
+      "auc_roc": 0.8972087303263314
+    },
+    "confusion_matrix": {
+      "TP": 964,
+      "FP": 381,
+      "FN": 458,
+      "TN": 4714
+    },
+    "feature_importance": [
+      {
+        "feature": 6,
+        "importance": 0.2779494524002075
+      },
+      {
+        "feature": 17,
+        "importance": 0.14689041674137115
+      },
+      {
+        "feature": 10,
+        "importance": 0.07968994975090027
+      },
+      {
+        "feature": 8,
+        "importance": 0.05712415277957916
+      },
+      {
+        "feature": 7,
+        "importance": 0.05698656663298607
+      },
+      {
+        "feature": 1,
+        "importance": 0.054677143692970276
+      },
+      {
+        "feature": 11,
+        "importance": 0.049279265105724335
+      },
+      {
+        "feature": 13,
+        "importance": 0.04787613824009895
+      },
+      {
+        "feature": 4,
+        "importance": 0.044423092156648636
+      },
+      {
+        "feature": 5,
+        "importance": 0.032563019543886185
+      }
+    ]
+  },
+  "financial_impact": {
+    "false_negative_loss": 13740000,
+    "false_positive_loss": 304800,
+    "true_positive_gain": 4820000,
+    "true_negative_gain": 2357000,
+    "total_gain": 7177000,
+    "total_loss": 14044800,
+    "net_value": -6867800
+  },
+  "recommendation": {
+    "model": "XGBoost",
+    "status": "PRODUCTION_READY",
+    "auc_roc": 0.8972087303263314,
+    "f1_score": 0.6967835200578244,
+    "rationale": [
+      "Excellent AUC-ROC: 0.8972",
+      "Good F1-Score: 0.6968",
+      "Fast inference time",
+      "Interpretable model",
+      "No CUDA dependency"
+    ]
+  },
+  "next_steps": [
+    "Deploy XGBoost model to production",
+    "Set up model monitoring",
+    "Schedule quarterly retraining"
+  ]
+}
