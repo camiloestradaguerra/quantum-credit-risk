@@ -467,19 +467,18 @@ Predict credit default probability for a single client with 8 original features
 **Request Body (8 features - API engineers 10 more):**
 ```json
 {
-  "raw_features": [45, 55000, 2, 15000, 8.5, 0.25, 0, 10]
+  "raw_features": [
+    45,        // person_age (years) - Customer age. Range: 18-144. Impact: Younger customers have higher default risk
+    55000,     // person_income (USD) - Annual gross income. Range: $9.6K-$2.3M. Impact: Higher income = lower risk
+    2,         // person_emp_length (years) - Years at current job. Range: 0-164. Impact: Longer employment = more stable
+    15000,     // loan_amnt (USD) - Loan amount requested. Range: $500-$99.9K. Impact: Larger loans = higher risk
+    8.5,       // loan_int_rate (%) - Interest rate offered. Range: 5.42%-35.99%. Impact: Higher rate = higher perceived risk
+    0.25,      // loan_percent_income (0-1) - Debt-to-income ratio. Range: 0.1%-89.5%. Impact: Most critical feature, >0.30 = high risk
+    0,         // cb_person_default_on_file (0 or 1) - Prior default? 0=No (good), 1=Yes (major risk)
+    10         // cb_person_cred_hist_length (years) - Credit history years. Range: 2-244. Impact: Longer = more predictable
+  ]
 }
 ```
-
-**Feature Mapping (8 inputs):**
-- `[0]`: Age (years)
-- `[1]`: Annual Income (USD)
-- `[2]`: Employment tenure (years)
-- `[3]`: Loan amount (USD)
-- `[4]`: Interest rate (%)
-- `[5]`: Debt-to-income ratio (0-1)
-- `[6]`: Prior default (0=No, 1=Yes)
-- `[7]`: Credit history length (years)
 
 **Response (200 OK):**
 ```json

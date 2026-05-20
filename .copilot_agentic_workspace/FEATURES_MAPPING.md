@@ -38,19 +38,44 @@ The API automatically engineers the remaining 10 features. You only need to prov
 {
   "raw_features": [
     45,        // person_age (years)
+               // The customer's age in years. Range: 18-144
+               // Impact: Younger customers (18-35) have higher default risk
+    
     55000,     // person_income (USD)
+               // Annual gross income in dollars. Range: $9,600-$2,300,000
+               // Impact: Higher income = lower risk. Used in debt ratios
+    
     2,         // person_emp_length (years)
+               // Years at current employer. Range: 0-164 years
+               // Impact: Longer employment = more stability & lower default risk
+    
     15000,     // loan_amnt (USD)
+               // Total loan amount requested in dollars. Range: $500-$99,999
+               // Impact: Larger loans relative to income = higher risk
+    
     8.5,       // loan_int_rate (%)
+               // Interest rate offered. Range: 5.42%-35.99%
+               // Impact: Higher rates indicate lender's perception of risk
+    
     0.25,      // loan_percent_income (0-1)
+               // Debt-to-income ratio (loan / annual income). Range: 0.1%-89.5%
+               // Impact: Most important feature. Values >0.30 = high risk
+               // Formula: (monthly payment × 12) / annual income
+    
     0,         // cb_person_default_on_file (0 or 1)
+               // Has customer had a previous default/delinquency?
+               // 0 = No prior default (good history)
+               // 1 = Has prior default on record (major risk indicator)
+    
     10         // cb_person_cred_hist_length (years)
+               // Years of credit history. Range: 2-244 years
+               // Impact: Longer history = more predictable behavior
   ]
 }
 ```
 
 **That's it!** The API will:
-1. ✅ Engineer 10 risk features
+1. ✅ Engineer 10 risk features from these 8
 2. ✅ Normalize all 18 features
 3. ✅ Run XGBoost prediction
 4. ✅ Return probability & recommendation
