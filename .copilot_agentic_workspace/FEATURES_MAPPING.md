@@ -1,10 +1,10 @@
 # 📊 Credit Risk Model - Feature Mapping
 
-## 18 Features Used by the XGBoost Model
+## Input Format: 8 Features (Simplified)
 
-The API expects 18 raw features in this exact order:
+The API automatically engineers the remaining 10 features. You only need to provide 8 original features:
 
-### Original Dataset Features (8)
+### 8 Original Dataset Features (Input)
 | Index | Feature Name | Description | Type | Unit/Range |
 |-------|--------------|-------------|------|-----------|
 | **0** | `person_age` | Customer age | Integer | years (18-144) |
@@ -16,54 +16,44 @@ The API expects 18 raw features in this exact order:
 | **6** | `cb_person_default_on_file` | Has prior default | Binary | 0=No, 1=Yes |
 | **7** | `cb_person_cred_hist_length` | Credit history years | Integer | years (2-244) |
 
-### Engineered Risk Features (10)
+### 10 Engineered Features (Calculated Automatically)
 | Index | Feature Name | Formula | Description |
 |-------|--------------|---------|-------------|
 | **8** | `debt_to_income` | Same as feature #5 | Debt burden ratio |
 | **9** | `interest_rate_risk` | `loan_int_rate²` | Squared interest rate penalty |
-| **10** | `loan_income_interaction` | `loan_amnt / (person_income + 1)` | Loan size relative to income |
+| **10** | `loan_income_interaction` | `loan_amnt / (income + 1)` | Loan size relative to income |
 | **11** | `emp_stability_log` | `log(person_emp_length + 1)` | Employment stability score |
-| **12** | `credit_history_ratio` | `cb_person_cred_hist_length / (person_age + 1)` | Credit maturity ratio |
+| **12** | `credit_history_ratio` | `history_length / (age + 1)` | Credit maturity ratio |
 | **13** | `default_risk_score` | `prior_default × debt_ratio` | Combined default indicator |
 | **14** | `age_normalized` | `person_age / 100` | Normalized age (0-1) |
 | **15** | `loan_amount_risk` | `log(loan_amnt + 1) × rate` | Loan amount-rate interaction |
-| **16** | `income_age_ratio` | `person_income / (person_age + 1)` | Income maturity |
-| **17** | `composite_risk` | Sum of debt, rate, and interaction | Overall risk composite |
+| **16** | `income_age_ratio` | `person_income / (age + 1)` | Income maturity |
+| **17** | `composite_risk` | Sum of debt, rate, interaction | Overall risk composite |
 
 ---
 
-## Example Request
+## Simple Request Example
 
 ```json
 {
   "raw_features": [
-    45,        // person_age
-    55000,     // person_income
-    5,         // person_emp_length
-    15000,     // loan_amnt
-    8.5,       // loan_int_rate
-    0.25,      // loan_percent_income
-    0,         // cb_person_default_on_file (0=No default history)
-    10,        // cb_person_cred_hist_length
-    0.25,      // debt_to_income (same as feature 5)
-    72.25,     // interest_rate_risk (8.5²)
-    0.273,     // loan_income_interaction
-    1.79,      // emp_stability_log
-    0.222,     // credit_history_ratio
-    0.0,       // default_risk_score (0 × 0.25)
-    0.45,      // age_normalized
-    1.235,     // loan_amount_risk
-    1222.22,   // income_age_ratio
-    0.598      // composite_risk
+    45,        // person_age (years)
+    55000,     // person_income (USD)
+    2,         // person_emp_length (years)
+    15000,     // loan_amnt (USD)
+    8.5,       // loan_int_rate (%)
+    0.25,      // loan_percent_income (0-1)
+    0,         // cb_person_default_on_file (0 or 1)
+    10         // cb_person_cred_hist_length (years)
   ]
 }
 ```
 
----
-
-## Feature Normalization
-
-**Important:** The API internally normalizes these features using StandardScaler fitted on training data. You can send raw values - the model handles the scaling automatically.
+**That's it!** The API will:
+1. ✅ Engineer 10 risk features
+2. ✅ Normalize all 18 features
+3. ✅ Run XGBoost prediction
+4. ✅ Return probability & recommendation
 
 ### Training Data Statistics
 | Feature | Mean | Std Dev | Min | Max |
@@ -95,27 +85,17 @@ The API expects 18 raw features in this exact order:
 ```python
 import requests
 
-# Define client
+# Define client with ONLY 8 features
 client = {
     "raw_features": [
         45,           # age
         55000,        # income
-        5,            # emp_length
+        2,            # employment_years
         15000,        # loan_amount
         8.5,          # interest_rate
         0.25,         # debt_to_income
-        0,            # has_default (0=no)
-        10,           # credit_history_years
-        0.25,         # debt_to_income (repeat)
-        72.25,        # interest_rate_risk
-        0.273,        # loan_income_interaction
-        1.79,         # emp_stability_log
-        0.222,        # credit_history_ratio
-        0.0,          # default_risk_score
-        0.45,         # age_normalized
-        1.235,        # loan_amount_risk
-        1222.22,      # income_age_ratio
-        0.598         # composite_risk
+        0,            # prior_default (0=no)
+        10            # credit_history_years
     ]
 }
 
@@ -128,6 +108,7 @@ response = requests.post(
 result = response.json()
 print(f"Default Probability: {result['probability']:.2%}")
 print(f"Decision: {result['recommendation']}")
+print(f"Expected Financial Value: ${result['financial_impact']['expected_value']:,}")
 ```
 
 ---

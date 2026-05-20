@@ -462,28 +462,24 @@ curl http://localhost:8000/health
 ```
 
 #### 2. **Make Prediction** `POST /predict`
-Predict credit default probability for a single client
+Predict credit default probability for a single client with 8 original features
 
-**Request Body (18D raw features):**
+**Request Body (8 features - API engineers 10 more):**
 ```json
 {
-  "raw_features": [45, 55000, 2, 15000, 8.5, 0.25, 5, 0, 0, 0.5, 0.3, 0.2, 0.1, 0.4, 0.6, 0.2, 0.3, 0.15]
+  "raw_features": [45, 55000, 2, 15000, 8.5, 0.25, 0, 10]
 }
 ```
 
-**Feature Mapping (18D features):**
-- `f0`: Age
-- `f1`: Annual Income  
-- `f2`: Num Accounts
-- `f3`: Total Credit Limit
-- `f4`: Interest Rate
-- `f5`: Credit Utilization
-- `f6`: Payment History Days
-- `f7`: Recent Default (binary)
-- `f8`: Recent Inquiry (binary)
-- `f9-f17`: Risk metrics (engineered features)
-
-**📍 Full feature documentation:** See [FEATURES_MAPPING.md](FEATURES_MAPPING.md) for complete feature names, formulas, and ranges.
+**Feature Mapping (8 inputs):**
+- `[0]`: Age (years)
+- `[1]`: Annual Income (USD)
+- `[2]`: Employment tenure (years)
+- `[3]`: Loan amount (USD)
+- `[4]`: Interest rate (%)
+- `[5]`: Debt-to-income ratio (0-1)
+- `[6]`: Prior default (0=No, 1=Yes)
+- `[7]`: Credit history length (years)
 
 **Response (200 OK):**
 ```json
