@@ -124,15 +124,39 @@ def predict(request: PredictionRequest):
     Input: 8 original features from credit dataset
     Output: Probability, decision, and financial impact
     
-    Feature order:
-    1. person_age (years)
-    2. person_income (USD)
-    3. person_emp_length (years)
-    4. loan_amnt (USD)
-    5. loan_int_rate (%)
-    6. loan_percent_income (0-1)
-    7. cb_person_default_on_file (0 or 1)
-    8. cb_person_cred_hist_length (years)
+    Feature order & Definitions:
+    
+    1. **person_age (years)** - Customer's age in years
+       - Range: 18-144 years
+       - Impact: Younger customers (18-35) have higher default risk
+    
+    2. **person_income (USD)** - Annual gross income in dollars
+       - Range: $9,600-$2,300,000
+       - Impact: Higher income = lower risk. Used in debt ratio calculations
+    
+    3. **person_emp_length (years)** - Years at current employer
+       - Range: 0-164 years
+       - Impact: Longer employment = more stability & lower default risk
+    
+    4. **loan_amnt (USD)** - Total loan amount requested
+       - Range: $500-$99,999
+       - Impact: Larger loans relative to income = higher risk
+    
+    5. **loan_int_rate (%)** - Interest rate offered
+       - Range: 5.42%-35.99%
+       - Impact: Higher rates indicate lender's perception of risk
+    
+    6. **loan_percent_income (0-1)** - Debt-to-income ratio
+       - Range: 0.1%-89.5% (as decimal, e.g., 0.25 = 25%)
+       - Impact: MOST IMPORTANT FEATURE. Values >0.30 indicate high risk
+    
+    7. **cb_person_default_on_file (0 or 1)** - Prior default history
+       - 0 = No prior default (good credit history)
+       - 1 = Has prior default on record (major risk indicator)
+    
+    8. **cb_person_cred_hist_length (years)** - Length of credit history
+       - Range: 2-244 years
+       - Impact: Longer history = more predictable behavior & lower risk
     """
     try:
         # Validate input - must be 8 original features
